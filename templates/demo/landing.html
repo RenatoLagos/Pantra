@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pantra — Probá la demo</title>
+  <link rel="stylesheet" href="/static/demo/chat.css">
+</head>
+<body class="landing">
+  <main class="landing-card">
+    <h1>Probá Pantra</h1>
+    <p class="subtitle">
+      Elegí un vertical y conversá con el asistente. Funciona como WhatsApp,
+      con texto y audios.
+    </p>
+
+    <div class="verticals">
+      {% for slug, info in verticals.items() %}
+      <a class="vertical" href="/demo/{{ slug }}">
+        <div class="vertical-emoji">{{ info.emoji }}</div>
+        <div class="vertical-info">
+          <strong>{{ info.name }}</strong>
+          <span>{{ slug }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    <p class="legal-note">
+      Esto es una simulación con datos ficticios. En producción Pantra
+      conversa por WhatsApp real.
+    </p>
+  </main>
+</body>
+</html>

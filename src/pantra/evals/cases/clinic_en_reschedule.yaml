@@ -1,0 +1,11 @@
+name: clinic_en_reschedule
+kind: classifier
+input:
+  business_domain: clinic
+  text: |
+    Hi, I have an appointment tomorrow but I need to move it to next week
+    if possible.
+expect:
+  language: en
+  intent: reschedule
+  needs_human: false

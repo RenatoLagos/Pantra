@@ -1,0 +1,10 @@
+name: angry_customer_handoff
+kind: classifier
+input:
+  business_domain: dental
+  text: |
+    This is unacceptable. I waited an hour past my appointment and want
+    to speak with the practice manager right now.
+expect:
+  intent: complaint
+  needs_human: true

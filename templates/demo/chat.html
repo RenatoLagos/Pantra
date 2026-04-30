@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pantra — {{ business_name }}</title>
+  <link rel="stylesheet" href="/static/demo/chat.css">
+</head>
+<body class="chat-body">
+  <div class="chat-shell">
+    <header class="chat-header">
+      <a href="/demo" class="back" aria-label="Volver">←</a>
+      <div class="chat-title">
+        <strong>{{ business_name }}</strong>
+        <span class="chat-status">en línea</span>
+      </div>
+      <button type="button" id="reset-btn" class="reset-btn" aria-label="Nueva conversación" title="Nueva conversación">↻</button>
+    </header>
+
+    <main id="messages" class="chat-messages">
+      <div class="bubble bubble-bot">
+        Hola 👋 Soy el asistente de {{ business_name }}. ¿En qué te puedo ayudar?
+      </div>
+    </main>
+
+    <footer class="chat-input">
+      <button id="record-btn" class="mic-btn" type="button" aria-label="Grabar audio">🎤</button>
+      <input id="text-input" type="text" placeholder="Escribí un mensaje" autocomplete="off">
+      <button id="send-btn" class="send-btn" type="button" aria-label="Enviar">↑</button>
+    </footer>
+  </div>
+
+  <script>
+    window.PANTRA_DEMO = {
+      vertical: {{ vertical | tojson }},
+      verticalSlug: {{ vertical_slug | tojson }},
+      sessionId: {{ session_id | tojson }},
+    };
+  </script>
+  <script src="/static/demo/chat.js"></script>
+</body>
+</html>

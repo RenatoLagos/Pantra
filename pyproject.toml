@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pantra"
+version = "0.1.0"
+description = "Multilingual AI conversational assistant for local businesses (WhatsApp MVP)."
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "Proprietary" }
+authors = [{ name = "Pantra" }]
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.4",
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic>=1.13",
+    "asyncpg>=0.29",
+    "psycopg2-binary>=2.9",          # alembic sync engine
+    "httpx>=0.27",
+    "redis>=5.0",
+    "celery[redis]>=5.4",
+    "structlog>=24.1",
+    "anthropic>=0.39",
+    "openai>=1.50",                   # Whisper STT
+    "google-generativeai>=0.7",       # optional fallback for classifier
+    "tenacity>=9.0",                  # retries on tool calls
+    "python-multipart>=0.0.9",
+    "orjson>=3.10",
+    "jinja2>=3.1",                    # web demo templates
+    "aiofiles>=24.1",                 # audio storage
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "respx>=0.21",                    # httpx mocking
+    "pyyaml>=6.0",                    # eval case files
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pantra"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
