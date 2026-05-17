@@ -50,7 +50,13 @@ class Classifier:
         message = await self._client.messages.create(
             model=self.choice.model,
             max_tokens=400,
-            system=CLASSIFIER_SYSTEM_PROMPT,
+            system=[
+                {
+                    "type": "text",
+                    "text": CLASSIFIER_SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
             messages=[{"role": "user", "content": render_user_prompt(safe_text, business_domain)}],
             # JSON-mode-equivalent: ask for JSON in the prompt and parse.
         )

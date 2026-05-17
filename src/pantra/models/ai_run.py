@@ -18,12 +18,17 @@ class AIRun(UUIDPK, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    role: Mapped[str] = mapped_column(String(32), nullable=False)  # 'classifier' | 'main' | 'summarizer'
+    role: Mapped[str] = mapped_column(String(32), nullable=False)  # 'classifier' | 'main' | 'summarizer' | 'fast_reply'
     provider: Mapped[str] = mapped_column(String(32), nullable=False)
     model: Mapped[str] = mapped_column(String(64), nullable=False)
 
     input_tokens: Mapped[int | None] = mapped_column(Integer)
     output_tokens: Mapped[int | None] = mapped_column(Integer)
+    # Anthropic prompt-caching telemetry. cache_read_tokens are billed at
+    # ~10% of input rate; cache_creation_tokens at ~125%. Both nullable
+    # because older rows + non-caching providers won't populate them.
+    cache_read_tokens: Mapped[int | None] = mapped_column(Integer)
+    cache_creation_tokens: Mapped[int | None] = mapped_column(Integer)
     latency_ms: Mapped[int | None] = mapped_column(Integer)
     cost_estimate: Mapped[float | None] = mapped_column(Numeric(10, 6))
 

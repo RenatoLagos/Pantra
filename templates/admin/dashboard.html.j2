@@ -1,0 +1,398 @@
+{# Pantra admin dashboard — internal usage analytics.
+   No Duna marketing chrome (this is internal-only). Monochrome table-heavy
+   layout, server-side rendered, no JS deps. Refresh the page to reload data. #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Pantra Admin · Usage</title>
+  <link rel="stylesheet" href="/static/landing/fonts.css">
+  <style>
+    :root {
+      --ink: #1a1816;
+      --graphite: #4d4846;
+      --stone: #898683;
+      --canvas: #ffffff;
+      --canvas-soft: #f7f7f5;
+      --canvas-cream: #edece7;
+      --primary: #160f0c;
+      --hairline: rgba(26, 23, 21, 0.13);
+      --ok: #1f8a4c;
+      --warn: #b07a1c;
+      --err: #b03333;
+      --font: "Manrope", system-ui, -apple-system, sans-serif;
+      --font-mono: "Inter", monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--canvas-soft);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 24px;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Header */
+    header.dash-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 24px;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .dash-title {
+      font-size: 28px; font-weight: 500;
+      letter-spacing: -0.8px; color: var(--ink);
+    }
+    .dash-title small {
+      font-weight: 400; color: var(--graphite);
+      margin-left: 8px;
+      letter-spacing: 0;
+    }
+    .dash-period {
+      font-size: 13px; color: var(--graphite);
+      font-family: var(--font-mono);
+    }
+
+    /* KPI cards row */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--canvas);
+      border-radius: 12px;
+      padding: 20px 24px;
+      border: 1px solid var(--hairline);
+    }
+    .kpi-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--graphite);
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 28px; font-weight: 500;
+      letter-spacing: -0.8px; line-height: 1.0;
+      color: var(--ink);
+    }
+    .kpi-sub {
+      font-size: 12px; color: var(--stone);
+      margin-top: 4px;
+    }
+    .kpi-card.kpi-highlight {
+      background: var(--canvas-cream);
+      border-color: var(--primary);
+    }
+    .kpi-card.kpi-highlight .kpi-label { color: var(--primary); }
+
+    /* Section title */
+    .section-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--graphite);
+      font-family: var(--font-mono);
+      margin: 32px 0 12px;
+    }
+
+    /* 2-column row of tables */
+    .row-2col {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Table */
+    .data-card {
+      background: var(--canvas);
+      border-radius: 12px;
+      border: 1px solid var(--hairline);
+      overflow: hidden;
+    }
+    .data-card-title {
+      font-size: 14px; font-weight: 500;
+      color: var(--ink);
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--hairline);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px 20px;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      font-weight: 500;
+      color: var(--graphite);
+      background: var(--canvas-soft);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    tr + tr td { border-top: 1px solid var(--hairline); }
+    td.mono, .mono { font-family: var(--font-mono); }
+    td.num, .num {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    td.muted { color: var(--graphite); }
+
+    /* Quota utilization bars */
+    .util-bar-wrap {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .util-bar {
+      flex: 1; height: 6px;
+      background: var(--hairline);
+      border-radius: 3px;
+      overflow: hidden;
+      min-width: 80px;
+    }
+    .util-fill {
+      height: 100%;
+      background: var(--ok);
+    }
+    .util-fill.warn { background: var(--warn); }
+    .util-fill.err { background: var(--err); }
+    .util-pct {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink);
+      min-width: 48px;
+      text-align: right;
+    }
+
+    /* Status pills */
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+    .pill.pill-ok { background: rgba(31,138,76,0.12); color: var(--ok); }
+    .pill.pill-warn { background: rgba(176,122,28,0.12); color: var(--warn); }
+    .pill.pill-err { background: rgba(176,51,51,0.12); color: var(--err); }
+
+    .empty {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--stone);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .row-2col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 540px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      body { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header class="dash-header">
+    <div class="dash-title">
+      Pantra Admin <small>· Usage analytics</small>
+    </div>
+    <div class="dash-period">
+      {{ period.since }} → {{ period.until }}
+    </div>
+  </header>
+
+  {# ─── KPI row ─────────────────────────────────────────────── #}
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Runs (este mes)</div>
+      <div class="kpi-value">{{ "{:,}".format(usage.runs) }}</div>
+      <div class="kpi-sub">LLM calls totales</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Costo actual</div>
+      <div class="kpi-value">€{{ "{:.2f}".format(usage.cost.actual_eur) }}</div>
+      <div class="kpi-sub">${{ "{:.2f}".format(usage.cost.actual_usd) }} USD</div>
+    </div>
+    <div class="kpi-card kpi-highlight">
+      <div class="kpi-label">Cache savings</div>
+      <div class="kpi-value">{{ "{:.1f}".format(usage.cost.cache_savings_pct) }}%</div>
+      <div class="kpi-sub">${{ "{:.2f}".format(usage.cost.cache_savings_usd) }} ahorrados</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Cache hit rate</div>
+      <div class="kpi-value">{{ "{:.1f}".format(usage.cache_hit_rate_pct) }}%</div>
+      <div class="kpi-sub">cache_read / (cache_read + input)</div>
+    </div>
+  </div>
+
+  {# ─── Tokens breakdown ────────────────────────────────────── #}
+  <div class="section-title">Tokens (este mes)</div>
+  <div class="data-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th class="num">Tokens</th>
+          <th>Pricing model</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Input</td>
+          <td class="num mono">{{ "{:,}".format(usage.tokens.input) }}</td>
+          <td class="muted">Full rate ($3 Sonnet, $1 Haiku / 1M)</td>
+        </tr>
+        <tr>
+          <td>Output</td>
+          <td class="num mono">{{ "{:,}".format(usage.tokens.output) }}</td>
+          <td class="muted">Full rate ($15 Sonnet, $5 Haiku / 1M)</td>
+        </tr>
+        <tr>
+          <td>Cache read</td>
+          <td class="num mono">{{ "{:,}".format(usage.tokens.cache_read) }}</td>
+          <td class="muted">10% del input rate (-90%)</td>
+        </tr>
+        <tr>
+          <td>Cache creation</td>
+          <td class="num mono">{{ "{:,}".format(usage.tokens.cache_creation) }}</td>
+          <td class="muted">125% del input rate (one-time)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  {# ─── By role + By model side by side ──────────────────────── #}
+  <div class="row-2col" style="margin-top: 16px;">
+    <div class="data-card">
+      <div class="data-card-title">Runs por rol</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Rol</th>
+            <th class="num">Runs</th>
+            <th class="num">%</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% if usage.by_role %}
+          {% for role, count in usage.by_role.items() %}
+          <tr>
+            <td>{{ role }}</td>
+            <td class="num mono">{{ "{:,}".format(count) }}</td>
+            <td class="num mono muted">
+              {{ "{:.1f}".format(100 * count / usage.runs) if usage.runs else "0.0" }}%
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="3" class="empty">Sin actividad este mes</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="data-card">
+      <div class="data-card-title">Runs por modelo</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Modelo</th>
+            <th class="num">Runs</th>
+            <th class="num">%</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% if usage.by_model %}
+          {% for model, count in usage.by_model.items() %}
+          <tr>
+            <td class="mono">{{ model }}</td>
+            <td class="num mono">{{ "{:,}".format(count) }}</td>
+            <td class="num mono muted">
+              {{ "{:.1f}".format(100 * count / usage.runs) if usage.runs else "0.0" }}%
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="3" class="empty">Sin actividad este mes</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# ─── Quotas table ─────────────────────────────────────────── #}
+  <div class="section-title">Quotas (pricing v4 hard limits)</div>
+  <div class="data-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Clínica</th>
+          <th class="mono">Plan</th>
+          <th class="num">Used / Limit</th>
+          <th>Utilization</th>
+          <th class="num">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% if quotas %}
+        {% for q in quotas %}
+        <tr>
+          <td>
+            {{ q.business_name }}
+            <div style="font-size: 11px; color: var(--stone); font-family: var(--font-mono);">
+              {{ q.business_id[:8] }}…
+            </div>
+          </td>
+          <td class="mono">{{ q.plan }}</td>
+          <td class="num mono">
+            {{ "{:,}".format(q.used) }} / {{ "{:,}".format(q.limit) }}
+          </td>
+          <td>
+            <div class="util-bar-wrap">
+              <div class="util-bar">
+                <div class="util-fill {% if q.utilization_pct >= 100 %}err{% elif q.utilization_pct >= 80 %}warn{% endif %}"
+                     style="width: {{ q.utilization_pct if q.utilization_pct <= 100 else 100 }}%;"></div>
+              </div>
+              <div class="util-pct">{{ "{:.0f}".format(q.utilization_pct) }}%</div>
+            </div>
+          </td>
+          <td class="num">
+            {% if q.exceeded %}
+              <span class="pill pill-err">EXCEEDED</span>
+            {% elif q.utilization_pct >= 80 %}
+              <span class="pill pill-warn">NEAR</span>
+            {% else %}
+              <span class="pill pill-ok">OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr><td colspan="5" class="empty">Sin clínicas pago activas (solo demo o sin datos)</td></tr>
+      {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top: 24px; font-size: 12px; color: var(--stone); text-align: center;">
+    JSON disponible en <code style="font-family: var(--font-mono);">/admin/usage</code> ·
+    Quotas en <code style="font-family: var(--font-mono);">/admin/usage/quotas</code> ·
+    Refresh para actualizar
+  </p>
+
+</div>
+</body>
+</html>

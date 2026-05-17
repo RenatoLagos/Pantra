@@ -1,0 +1,130 @@
+{# Pantra landing — base layout.
+   Inherits Duna design system (docs/design/duna/DESIGN.md).
+   Copy is in Spanish for founder review; all visible strings tagged with
+   <!-- TRANSLATE-DE: ... --> need German translation by a native speaker
+   before publishing. #}
+<!DOCTYPE html>
+<html lang="{{ html_lang | default('es') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pantra — KI-Assistent für Zahnarztpraxen{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Pantra ist der KI-WhatsApp-Assistent für Ihre Zahnarztpraxis in Berlin. Termine buchen, Erinnerungen senden, No-Shows reduzieren. DSGVO-konform.{% endblock %}">
+
+  {# OpenGraph / Twitter #}
+  <meta property="og:title" content="Pantra — KI-Assistent für Zahnarztpraxen">
+  <meta property="og:description" content="Mehrsprachiger WhatsApp-Assistent für Zahnarztpraxen. DSGVO-konform.">
+  <meta property="og:locale" content="de_DE">
+  <meta property="og:type" content="website">
+
+  {# Manrope + Inter — self-hosted from /static/landing/fonts to keep the
+     landing DSGVO-clean (no Google Fonts CDN call). Subsets latin +
+     latin-ext bundled — covers DE, EN, ES, TR (with diacritics), FR, IT, PT. #}
+  <link rel="stylesheet" href="/static/landing/fonts.css">
+  <link rel="stylesheet" href="/static/landing/style.css">
+
+  {# JSON-LD schema.org for SEO. #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Pantra",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web-based",
+    "offers": {
+      "@type": "Offer",
+      "price": "349",
+      "priceCurrency": "EUR",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "349",
+        "priceCurrency": "EUR",
+        "billingDuration": "P1M"
+      }
+    },
+    "areaServed": "DE",
+    "audience": {
+      "@type": "BusinessAudience",
+      "audienceType": "Dental practices"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/einzelpraxis" class="nav-brand">Pantra</a>
+  <ul class="nav-links">
+    {# Absolute paths so the nav works across both /einzelpraxis and /pricing.
+       TRANSLATE-DE: keep these as German. Spanish here is dev-mode only. #}
+    <li><a href="/einzelpraxis#features">Funciones</a></li>
+    <li><a href="/pricing">Precios</a></li>
+    <li><a href="/einzelpraxis#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-cta-wrap">
+    <span class="nav-lang">
+      <a href="?lang=de" class="{% if html_lang == 'de' %}active{% endif %}">DE</a>
+      <a href="?lang=en" class="{% if html_lang == 'en' %}active{% endif %}">EN</a>
+    </span>
+    <a href="#get-started" class="btn-primary sm">
+      <!-- TRANSLATE-DE: 14 Tage kostenlos testen -->
+      Probá 14 días gratis
+    </a>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<footer class="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <div class="footer-brand-col">
+        <div class="footer-brand">Pantra</div>
+        <p class="footer-brand-tag">
+          <!-- TRANSLATE-DE: Der KI-WhatsApp-Assistent für Zahnarztpraxen in Berlin.
+                            Mehrsprachig. DSGVO-konform. Hosted in Frankfurt. -->
+          El asistente de IA por WhatsApp para clínicas dentales en Berlin.
+          Multilingüe. Cumple con DSGVO. Servidores en Frankfurt.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Producto</h4>
+        <ul>
+          <!-- TRANSLATE-DE: Funktionen / Preise / Demo / FAQ -->
+          <li><a href="#features">Funciones</a></li>
+          <li><a href="#pricing">Precios</a></li>
+          <li><a href="/demo">Demo en vivo</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Recht</h4>
+        <ul>
+          <!-- TRANSLATE-DE: Impressum / Datenschutz / AVV / AGB -->
+          <li><a href="/impressum">Impressum</a></li>
+          <li><a href="/datenschutz">Datenschutz</a></li>
+          <li><a href="/avv">AVV (DSGVO)</a></li>
+          <li><a href="/agb">AGB</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Kontakt</h4>
+        <ul>
+          <li><a href="mailto:hallo@pantra.de">hallo@pantra.de</a></li>
+          <li><a href="#get-started">Demo agendar</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-base">
+      <span>© 2026 Pantra · Made in Berlin</span>
+      <span>
+        <!-- TRANSLATE-DE: DSGVO-konform · AVV inklusive · Hosted in Frankfurt -->
+        DSGVO-konform · AVV inklusive · Hosted in Frankfurt
+      </span>
+    </div>
+  </div>
+  <div class="footer-watercolor" aria-hidden="true"></div>
+</footer>
+
+</body>
+</html>

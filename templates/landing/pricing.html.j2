@@ -1,0 +1,588 @@
+{% extends "landing/_base.html.j2" %}
+
+{% block title %}Preise — Pantra für Zahnarztpraxen | Solo, Solo Plus, Multi{% endblock %}
+
+{% block meta_description %}Pantra Preise: Solo €149/Monat, Solo Plus €349/Monat (Empfohlen), Multi für Gemeinschaftspraxen. Mehrsprachig, DSGVO-konform, AVV inklusive.{% endblock %}
+
+{% block content %}
+
+{# ════════════════════════════════════════════════════════════
+   1. PRICING HEADER — smaller than /einzelpraxis (no display-mega here;
+   this page is comparative, not emotional outbound destination).
+   ════════════════════════════════════════════════════════════ #}
+<section style="padding: 80px 0 32px;">
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: Preise -->
+      Precios
+    </div>
+    <h1 class="section-heading" style="font-size: 56px; letter-spacing: -2.5px; max-width: 900px;">
+      <!-- TRANSLATE-DE: Einfache Preise. Keine Überraschungen. -->
+      Pricing simple. Sin sorpresas.
+    </h1>
+    <p class="section-intro" style="font-size: 20px; max-width: 720px;">
+      <!-- TRANSLATE-DE: Wählen Sie den Plan, der zu Ihrer Praxis passt.
+                        Wechseln Sie jederzeit. Cancel monatlich, ohne Bindung. -->
+      Elegí el plan que te queda según el tamaño de tu clínica.
+      Subí o bajá de plan cuando quieras. Cancelación mensual, sin compromiso.
+    </p>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   2. 3-UP PRICING COMPARISON
+   ════════════════════════════════════════════════════════════ #}
+<section id="pricing-tiers" style="padding: 32px 0 96px;">
+  <div class="container">
+    <div class="pricing-compare-grid">
+
+      {# Card 1: Solo €149 #}
+      <div class="pricing-card-compare">
+        <div class="pc-tier">Solo</div>
+        <p class="pc-tagline">
+          <!-- TRANSLATE-DE: Für traditionelle Einzelpraxen -->
+          Para Einzelpraxis tradicional
+        </p>
+        <div class="pc-price">
+          <span class="pc-amount">€149</span>
+          <span class="pc-period">
+            <!-- TRANSLATE-DE: / Monat -->
+            / mes
+          </span>
+        </div>
+        <div class="pc-setup">
+          <!-- TRANSLATE-DE: + €199 einmalige Einrichtung -->
+          + €199 setup único
+        </div>
+        <ul class="pc-features">
+          <li>
+            <!-- TRANSLATE-DE: Deutsch + Englisch -->
+            Alemán + inglés
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: 600 Konversationen/Monat -->
+            600 conversaciones/mes
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Nur Text (kein Audio) -->
+            Solo texto (sin audio)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Erinnerungen 24h vorher -->
+            Recordatorios 24h antes
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Email-Eskalation -->
+            Escalación por email
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: AVV inklusive (DSGVO) -->
+            AVV incluido (DSGVO)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Server in Frankfurt -->
+            Servidores en Frankfurt
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Support 48h -->
+            Soporte 48h
+          </li>
+        </ul>
+        <div class="pc-cta">
+          <a href="/einzelpraxis#get-started" class="btn-secondary" style="width: 100%; display: flex;">
+            <!-- TRANSLATE-DE: 14 Tage kostenlos testen -->
+            Probá 14 días gratis
+          </a>
+        </div>
+      </div>
+
+      {# Card 2: Solo Plus €349 (FEATURED) #}
+      <div class="pricing-card-compare pc-featured">
+        <div class="pc-badge">
+          <!-- TRANSLATE-DE: Empfohlen -->
+          Recomendado
+        </div>
+        <div class="pc-tier">Solo Plus</div>
+        <p class="pc-tagline">
+          <!-- TRANSLATE-DE: Für moderne Einzelpraxen -->
+          Para Einzelpraxis moderna
+        </p>
+        <div class="pc-price">
+          <span class="pc-amount">€349</span>
+          <span class="pc-period">
+            <!-- TRANSLATE-DE: / Monat -->
+            / mes
+          </span>
+        </div>
+        <div class="pc-setup">
+          <!-- TRANSLATE-DE: + €399 einmalige Einrichtung -->
+          + €399 setup único
+        </div>
+        <ul class="pc-features">
+          <li>
+            <!-- TRANSLATE-DE: DE + EN + 2 Sprachen Ihrer Wahl -->
+            DE + EN + <strong>2 idiomas a tu elección</strong>
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: 2.000 Konversationen/Monat -->
+            2.000 conversaciones/mes
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Audio bidirektional (STT + TTS) -->
+            Audio bidireccional (STT + TTS)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Multi-touch Erinnerungen (48h / 24h / 2h) -->
+            Recordatorios multi-touch (48h / 24h / 2h)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: No-Show Recovery automatisch -->
+            No-show recovery automático
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: PVS-Integration (Dampsoft, CHARLY, Z1) -->
+            Integración PVS (Dampsoft, CHARLY, Z1)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Telegram + Email Eskalation -->
+            Escalación por Telegram + email
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: AVV inkl. + Server in Frankfurt -->
+            AVV incluido + Servers Frankfurt
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Premium Support 24h -->
+            Soporte premium 24h
+          </li>
+        </ul>
+        <div class="pc-cta">
+          <a href="/einzelpraxis#get-started" class="btn-primary" style="width: 100%; display: flex;">
+            <!-- TRANSLATE-DE: 14 Tage kostenlos testen -->
+            Probá 14 días gratis
+          </a>
+        </div>
+      </div>
+
+      {# Card 3: Multi (coming soon) #}
+      <div class="pricing-card-compare pc-coming-soon">
+        <div class="pc-badge pc-badge-soft">
+          <!-- TRANSLATE-DE: Bald verfügbar -->
+          Próximamente
+        </div>
+        <div class="pc-tier">Multi</div>
+        <p class="pc-tagline">
+          <!-- TRANSLATE-DE: Für Gemeinschaftspraxen (2-4 Behandler) -->
+          Para Gemeinschaftspraxis (2-4 dentistas)
+        </p>
+        <div class="pc-price">
+          <span class="pc-amount">
+            <!-- TRANSLATE-DE: ab €499 -->
+            desde €499
+          </span>
+          <span class="pc-period">
+            <!-- TRANSLATE-DE: / Monat -->
+            / mes
+          </span>
+        </div>
+        <div class="pc-setup">
+          <!-- TRANSLATE-DE: Custom Onboarding -->
+          Setup custom
+        </div>
+        <ul class="pc-features">
+          <li>
+            <!-- TRANSLATE-DE: Alles aus Solo Plus + -->
+            Todo lo de Solo Plus +
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Bis zu 4 Behandler / Kalender -->
+            Hasta 4 dentistas / calendarios
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Intelligente Mehr-Doktor-Triage -->
+            Triaje inteligente multi-doctor
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Mehrere Services pro Behandler -->
+            Servicios múltiples por dentista
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Erweiterte Analytics-Dashboards -->
+            Dashboards analíticos extendidos
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Dedizierter Account Manager -->
+            Account manager dedicado
+          </li>
+        </ul>
+        <div class="pc-cta">
+          <a href="mailto:hallo@pantra.de?subject=Multi%20Praxis%20Frühzugang" class="btn-secondary" style="width: 100%; display: flex;">
+            <!-- TRANSLATE-DE: Frühzugang anfragen -->
+            Solicitar acceso temprano
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   3. ADD-ONS
+   ════════════════════════════════════════════════════════════ #}
+<section id="addons">
+  <div class="container">
+    <div class="section-eyebrow">Add-ons</div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Extras, die Sie buchen, wenn Sie sie brauchen. -->
+      Extras que sumás cuando los necesitás.
+    </h2>
+
+    <div class="addons-grid">
+      <div class="addon-card">
+        <div class="addon-icon">🌍</div>
+        <h3>
+          <!-- TRANSLATE-DE: Zusätzliche Sprache -->
+          Idioma adicional
+        </h3>
+        <div class="addon-price">+€39 / mes</div>
+        <p>
+          <!-- TRANSLATE-DE: Pro zusätzliche Sprache (3., 4., …). Solo Plus
+                            enthält bereits 2 Sprachen Ihrer Wahl. Verfügbar:
+                            TR, AR, ES, FR, RU, IT, PT. -->
+          Por idioma extra (3er, 4to). Solo Plus ya incluye 2 a tu elección.
+          Disponibles: TR, AR, ES, FR, RU, IT, PT.
+        </p>
+      </div>
+      <div class="addon-card">
+        <div class="addon-icon">🤝</div>
+        <h3>
+          <!-- TRANSLATE-DE: Onboarding vor Ort -->
+          Onboarding presencial
+        </h3>
+        <div class="addon-price">
+          <!-- TRANSLATE-DE: +€199 einmalig -->
+          +€199 una vez
+        </div>
+        <p>
+          <!-- TRANSLATE-DE: Persönlicher Termin mit dem Gründer in Ihrer Praxis.
+                            Komplettes Setup + Team-Schulung in 90 Min. -->
+          Cita presencial con el founder en tu clínica. Setup completo + training
+          al equipo en 90 minutos.
+        </p>
+      </div>
+      <div class="addon-card">
+        <div class="addon-icon">📊</div>
+        <h3>
+          <!-- TRANSLATE-DE: Überschreitung -->
+          Excedente
+        </h3>
+        <div class="addon-price">
+          <!-- TRANSLATE-DE: €0,15 / Konv. -->
+          €0,15 / conv.
+        </div>
+        <p>
+          <!-- TRANSLATE-DE: Wenn Sie das monatliche Limit Ihres Plans
+                            überschreiten, werden zusätzliche Konversationen
+                            nach Verbrauch berechnet. -->
+          Si superás el hard limit mensual de tu plan, las conversaciones
+          adicionales se cobran por uso.
+        </p>
+      </div>
+      <div class="addon-card">
+        <div class="addon-icon">💰</div>
+        <h3>
+          <!-- TRANSLATE-DE: Jährliche Zahlung -->
+          Pago anual
+        </h3>
+        <div class="addon-price">
+          <!-- TRANSLATE-DE: 2 Monate gratis -->
+          2 meses gratis
+        </div>
+        <p>
+          <!-- TRANSLATE-DE: 12 Monate vorab zahlen, 2 Monate Rabatt erhalten.
+                            Auf Anfrage verfügbar. -->
+          Pago 12 meses por adelantado, recibís 2 meses de descuento.
+          Disponible bajo solicitud.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   4. LIMITS EXPLAINER — clarify hard limits + excedente
+   ════════════════════════════════════════════════════════════ #}
+<section>
+  <div class="container">
+    <div class="limits-band">
+      <div>
+        <h3>
+          <!-- TRANSLATE-DE: Was sind "Konversationen"? -->
+          ¿Qué cuenta como una "conversación"?
+        </h3>
+        <p style="margin-bottom: 16px;">
+          <!-- TRANSLATE-DE: Eine Konversation ist ein Gespräch zwischen einem
+                            Patienten und Pantra. Egal ob 3 oder 50 Nachrichten
+                            in dieser Gesprächsrunde — es zählt als eine
+                            Konversation. -->
+          Una conversación es un thread de chat entre un paciente y Pantra. Da
+          igual si tiene 3 o 50 mensajes — cuenta como UNA conversación.
+        </p>
+        <p>
+          <!-- TRANSLATE-DE: Wenn der Patient nach 30 Minuten Inaktivität
+                            wieder schreibt, beginnt eine neue Konversation. -->
+          Si el paciente vuelve a escribir después de 30 minutos de inactividad,
+          se cuenta una nueva conversación.
+        </p>
+      </div>
+      <div class="limits-table">
+        <div class="limits-row">
+          <div class="limits-label">
+            <!-- TRANSLATE-DE: Solo — Limit -->
+            Solo — Límite
+          </div>
+          <div class="limits-value">600 / mes</div>
+        </div>
+        <div class="limits-row">
+          <div class="limits-label">
+            <!-- TRANSLATE-DE: Solo Plus — Limit -->
+            Solo Plus — Límite
+          </div>
+          <div class="limits-value">2.000 / mes</div>
+        </div>
+        <div class="limits-row">
+          <div class="limits-label">
+            <!-- TRANSLATE-DE: Überschreitung pro Konversation -->
+            Excedente por conversación
+          </div>
+          <div class="limits-value">€0,15</div>
+        </div>
+        <div class="limits-row">
+          <div class="limits-label">
+            <!-- TRANSLATE-DE: Durchschnittliche Einzelpraxis -->
+            Promedio Einzelpraxis
+          </div>
+          <div class="limits-value">
+            <!-- TRANSLATE-DE: ~150–500/mes -->
+            ~150-500 / mes
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   5. PRICING FAQ — pricing-specific questions
+   ════════════════════════════════════════════════════════════ #}
+<section id="faq">
+  <div class="container">
+    <div class="section-eyebrow">FAQ</div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Fragen zum Pricing. -->
+      Preguntas sobre el pricing.
+    </h2>
+
+    <div class="faq-list">
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Was passiert, wenn ich das monatliche Limit überschreite? -->
+          ¿Qué pasa si excedo el límite mensual?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Pantra benachrichtigt Sie sofort per Telegram +
+                            Email. Sie haben zwei Optionen: (1) Upgrade des
+                            Plans, (2) Aktivierung des Verbrauchsmodells
+                            (€0,15/zusätzliche Konversation). Wir blockieren
+                            den Service nicht ohne Vorwarnung. -->
+          Pantra te avisa inmediatamente por Telegram + email. Tenés dos
+          opciones: (1) upgradear el plan, o (2) activar billing por uso
+          (€0,15/conversación adicional). No bloqueamos el servicio sin avisar.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Kann ich später den Plan ändern? -->
+          ¿Puedo cambiar de plan después?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Ja. Upgrade von Solo zu Solo Plus ist sofort wirksam,
+                            pro-rata berechnet. Downgrade gilt ab dem nächsten
+                            Abrechnungszyklus. Keine Strafen, keine Fragen. -->
+          Sí. Upgrade de Solo a Solo Plus es inmediato, prorrateado. Downgrade
+          aplica desde el próximo ciclo de facturación. Sin penalidad ni
+          preguntas.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Gibt es eine Mindestlaufzeit? -->
+          ¿Hay permanencia mínima?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Nein. Monatliche Kündigung mit 30 Tagen Frist.
+                            Wenn Sie sich für die jährliche Vorauszahlung
+                            entscheiden (2 Monate gratis), gibt es einen
+                            12-Monats-Zeitraum. -->
+          No. Cancelación mensual con 30 días de aviso. Si optás por pago anual
+          prepago (2 meses gratis), hay un compromiso de 12 meses.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Welche Bezahlmethoden akzeptiert ihr? -->
+          ¿Qué métodos de pago aceptan?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: SEPA-Lastschrift (Standard für deutsche
+                            Praxen) oder Kreditkarte (VISA, MasterCard).
+                            Rechnung auf Wunsch monatlich oder jährlich. -->
+          SEPA-Lastschrift (estándar para clínicas alemanas) o tarjeta de
+          crédito (VISA, MasterCard). Facturación mensual o anual a elección.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Was kostet ein zusätzlicher Sprachkanal? -->
+          ¿Cuánto cuesta agregar un idioma extra?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: +€39/Monat pro zusätzlicher Sprache. Solo Plus
+                            enthält bereits 2 Sprachen Ihrer Wahl. Ein dritter
+                            Sprachkanal (z. B. Arabisch nach Türkisch und
+                            Spanisch) wäre +€39/Monat. Volumenrabatt ab 4
+                            Sprachen verfügbar — fragen Sie nach. -->
+          +€39/mes por idioma extra. Solo Plus ya incluye 2 idiomas a tu
+          elección. Un tercer idioma (ej: árabe después de turco y español) son
+          +€39/mes. Volume discount disponible a partir de 4 idiomas — consultanos.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Können sich die Preise später ändern? -->
+          ¿Pueden cambiar los precios después?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Wir behalten uns laut Vertrag eine Preisanpassung
+                            von bis zu 8% pro Jahr vor, mit 60 Tagen Ankündigung
+                            (Standard für deutsche B2B SaaS). Bei Vorauszahlung
+                            sichern Sie sich den aktuellen Preis für 12 Monate. -->
+          Por contrato nos reservamos un ajuste anual de hasta 8% con 60 días de
+          aviso (estándar B2B SaaS alemán). Si pagás anual prepago, lockeás el
+          precio actual por 12 meses.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Bieten Sie Rabatte für mehrere Praxen oder Ketten? -->
+          ¿Tienen descuentos para múltiples clínicas o cadenas (DSO)?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Ja. Für 3+ Praxen unter derselben Eigentümerschaft
+                            haben wir individuelle Enterprise-Tarife — bitte
+                            kontaktieren Sie uns für ein Angebot. -->
+          Sí. Para 3+ clínicas bajo la misma propiedad ofrecemos pricing
+          Enterprise custom — contactanos para un quote.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Gibt es ein kostenloses Probeangebot? -->
+          ¿Hay prueba gratuita?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Ja — 14 Tage kostenlos, ohne Kreditkarte, ohne
+                            Installation. Sie können Pantra in voller Solo Plus
+                            Konfiguration testen. Nach 14 Tagen wechseln Sie
+                            automatisch auf den von Ihnen gewählten Plan oder
+                            kündigen einfach. -->
+          Sí — 14 días gratis, sin tarjeta, sin instalación. Probás Pantra en
+          configuración completa Solo Plus. Después de 14 días pasás
+          automáticamente al plan que elijas, o cancelás sin compromiso.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   6. TRUST BLOCK (compact) — reuse the 4-badge pattern
+   ════════════════════════════════════════════════════════════ #}
+<section>
+  <div class="container">
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: In jedem Plan enthalten. -->
+      Incluido en todos los planes.
+    </h2>
+
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-card-icon">🛡️</div>
+        <div class="trust-card-title">DSGVO-konform</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Datenverarbeitung nach europäischem Recht. -->
+          Procesamiento según el reglamento europeo.
+        </p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card-icon">📄</div>
+        <div class="trust-card-title">AVV inkl.</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Auftragsverarbeitungsvertrag vor jedem Vertrag
+                            unterschriftsbereit. -->
+          AVV firmable antes del primer pago.
+        </p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card-icon">🇩🇪</div>
+        <div class="trust-card-title">Server in DE</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Hosted in Frankfurt. Daten bleiben in Deutschland. -->
+          Hosted in Frankfurt. Tus datos en Alemania.
+        </p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card-icon">💳</div>
+        <div class="trust-card-title">SEPA-Lastschrift</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Wie jeder andere deutsche Anbieter. -->
+          Como cualquier proveedor alemán.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   7. FINAL CTA — narrative-style, drives to /einzelpraxis trial
+   ════════════════════════════════════════════════════════════ #}
+<section style="padding-bottom: 128px;">
+  <div class="container">
+    <div class="testimonial-slab" style="text-align: center;">
+      <h3 style="margin: 0 auto 32px;">
+        <!-- TRANSLATE-DE: Bereit, Ihre Praxis zu entlasten? -->
+        ¿Listo para descargar a tu equipo?
+      </h3>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="/einzelpraxis#get-started" class="btn-light-pill">
+          <!-- TRANSLATE-DE: 14 Tage kostenlos testen -->
+          Probá 14 días gratis
+        </a>
+        <a href="/einzelpraxis" class="btn-secondary" style="border-color: var(--on-primary); color: var(--on-primary);">
+          <!-- TRANSLATE-DE: Mehr über Pantra erfahren -->
+          Conocé más sobre Pantra
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

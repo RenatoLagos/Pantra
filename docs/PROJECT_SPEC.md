@@ -12,15 +12,57 @@ handoff.
 
 **One sentence**: the AI assistant that talks like someone from your team.
 
-## 2. Business model (single Pro plan at launch)
+## 2. Business model (pricing v4 — confirmed 2026-05-08)
 
-- Monthly: **€450/mo**
-- Optional setup: **€1,500–€3,000**
+Two-tier structure focused on Einzelpraxis (70% of German dental
+market). Multi/Enterprise tiers deferred until a Gemeinschaftspraxis or
+DSO chain pulls them. See `BUSINESS_PLAN_6M.md` for the full GTM logic.
+
+### Tiers
+
+- **Solo** — €149/mo + €199 one-time setup
+  - Languages: **DE + EN** (1 fixed pair)
+  - Hard limit: **600 conversations/mo**
+  - Text-only (no audio)
+  - 24h reminders
+  - Email handoff
+
+- **Solo Plus** ⭐ — €349/mo + €399 one-time setup
+  - Languages: **DE + EN + 2 of customer's choice** (TR, AR, ES, FR, RU, IT, PT)
+  - Hard limit: **2.000 conversations/mo**
+  - Bidirectional audio (Whisper STT + TTS mirror)
+  - Multi-touch reminders (48h / 24h / 2h)
+  - No-show recovery (auto re-booking)
+  - Telegram + email handoff
+  - PVS integration (Dampsoft, CHARLY, Z1) via webhook
+
+### Add-ons
+
+- Extra language: **+€39/mo** each (3rd, 4th, etc.)
+- Onsite onboarding: **+€199 one-time** (optional)
+- Excess conversations: **€0.15/conv** beyond hard limit
+
+### Contract terms
+
+- Setup fee always charged (compliance signal in DACH B2B)
+- Annual prepay (2 months free) **available on request**, not promoted in
+  landing until month 7+ (avoid adverse selection in early stage)
+- Contractual price-adjustment clause: up to 8%/year with 60 days notice
+  (DACH B2B SaaS standard)
+
+### Channel & languages
+
 - Channel: **WhatsApp** (Instagram deferred to Phase 2)
-- Languages MVP: **DE, EN, ES, TR** (Berlin demographics → Turkish in MVP)
-- Included: AI assistant, multilingual chat, Google Calendar, booking /
-  appointment / lead workflows, basic CRM, human handoff (Telegram/email),
-  monthly report, business knowledge base.
+- Language pool: **DE, EN, ES, TR, AR, FR, RU, IT, PT** (Berlin demographics
+  warrant Turkish + Arabic; rest are common expat languages)
+- DE+EN are always included; remaining languages are paid (bundled in
+  Solo Plus, add-on for Solo or 3rd+ in Solo Plus)
+
+### Included regardless of tier
+
+AI assistant, Google Calendar, booking / appointment / lead workflows,
+basic CRM, monthly report, business knowledge base, AVV (DSGVO),
+hosted in Frankfurt.
 
 ## 3. Closed decisions (2026-04-27)
 

@@ -23,6 +23,8 @@ class EngineResult:
     input_tokens: int | None
     output_tokens: int | None
     latency_ms: int
+    cache_read_tokens: int | None = None
+    cache_creation_tokens: int | None = None
 
 
 class ConversationEngine:
@@ -49,13 +51,31 @@ class ConversationEngine:
         messages: list[dict[str, Any]],
         tool_definitions: list[dict[str, Any]],
     ) -> EngineResult:
+        # Prompt caching: system prompt + tools are stable across turns of
+        # the same conversation. Marking them ephemeral ($0.10x input on hit)
+        # collapses the dominant cost during the tool-use loop where we
+        # re-send the full prompt 2-5 times per inbound message.
+        cached_system = [
+            {
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+        cached_tools = list(tool_definitions)
+        if cached_tools:
+            cached_tools[-1] = {
+                **cached_tools[-1],
+                "cache_control": {"type": "ephemeral"},
+            }
+
         t0 = time.perf_counter()
         resp = await self._client.messages.create(
             model=self.choice.model,
             max_tokens=settings.llm_main_max_tokens,
             temperature=settings.llm_main_temperature,
-            system=system_prompt,
-            tools=tool_definitions,
+            system=cached_system,
+            tools=cached_tools,
             messages=messages,
         )
         latency_ms = int((time.perf_counter() - t0) * 1000)
@@ -88,4 +108,6 @@ class ConversationEngine:
             input_tokens=getattr(resp.usage, "input_tokens", None),
             output_tokens=getattr(resp.usage, "output_tokens", None),
             latency_ms=latency_ms,
+            cache_read_tokens=getattr(resp.usage, "cache_read_input_tokens", None),
+            cache_creation_tokens=getattr(resp.usage, "cache_creation_input_tokens", None),
         )

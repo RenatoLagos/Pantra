@@ -1,0 +1,673 @@
+{% extends "landing/_base.html.j2" %}
+
+{% block title %}Pantra — KI-Assistent für Ihre Zahnarztpraxis | 24/7 mehrsprachig{% endblock %}
+
+{% block content %}
+
+{# ════════════════════════════════════════════════════════════
+   1. HERO — watercolor band + display-mega + WhatsApp mockup
+   ════════════════════════════════════════════════════════════ #}
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-content">
+      <h1>
+        <!-- TRANSLATE-DE: Der KI-Assistent für Ihre Zahnarztpraxis. 24/7. Mehrsprachig. -->
+        El asistente de IA para tu clínica dental. 24/7. Multilingüe.
+      </h1>
+      <p class="lead">
+        <!-- TRANSLATE-DE: Pantra antwortet auf WhatsApp, bucht Termine und reduziert
+                          No-Shows um 30%. In Deutsch, Englisch und 2 weiteren Sprachen
+                          Ihrer Wahl. -->
+        Pantra responde tus mensajes de WhatsApp, reserva turnos y reduce los
+        no-shows en un 30%. En alemán, inglés y 2 idiomas más a tu elección.
+      </p>
+      <div class="hero-actions">
+        <a href="#get-started" class="btn-primary">
+          <!-- TRANSLATE-DE: 14 Tage kostenlos testen -->
+          Probá 14 días gratis
+        </a>
+        <a href="#get-started" class="btn-secondary">
+          <!-- TRANSLATE-DE: Live-Demo buchen -->
+          Agendá una demo
+        </a>
+      </div>
+      <div class="trust-pills">
+        <span>DSGVO-konform</span>
+        <span>AVV inklusive</span>
+        <span>Hosted in Frankfurt</span>
+        <span>SEPA-Lastschrift</span>
+      </div>
+    </div>
+
+    {# WhatsApp conversation mockup — replaces the watercolor mountain in Duna's
+       hero. For dental clinics this is more concrete: shows the actual product
+       in action. Real conversation example. #}
+    <div class="whatsapp-mockup" aria-label="WhatsApp conversation mockup">
+      <div class="wa-header">
+        <div class="wa-avatar">P</div>
+        <div>
+          <div class="wa-meta-name">Praxis Schmidt</div>
+          <div class="wa-meta-status">● Online · Pantra</div>
+        </div>
+      </div>
+      <div class="wa-bubbles">
+        {# TRANSLATE-DE: keep DE+TR mix for the multilingual showcase. #}
+        <div class="wa-bubble in">
+          Hallo, kann ich für nächste Woche einen Termin bekommen?
+          <small>Sa 09:42</small>
+        </div>
+        <div class="wa-bubble out">
+          Klar 😊 Wofür brauchen Sie den Termin — Kontrolle oder etwas Spezielles?
+          <small>Sa 09:42</small>
+        </div>
+        <div class="wa-bubble in">
+          Sadece kontrol için lütfen
+          <small>Sa 09:43</small>
+        </div>
+        <div class="wa-bubble out">
+          Tabii ki! Çarşamba saat 14:30 müsait — uygun mu?
+          <small>Sa 09:43</small>
+        </div>
+        <div class="wa-bubble in">
+          Perfekt, danke!
+          <small>Sa 09:44</small>
+        </div>
+        <div class="wa-bubble out">
+          ✅ Termin gebucht — Mi 14:30, Praxis Schmidt. Bis dann!
+          <small>Sa 09:44</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   2. PROBLEM FRAMING — 3 stats
+   ════════════════════════════════════════════════════════════ #}
+<section>
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: Das Problem -->
+      El problema
+    </div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Verlieren Sie Patient:innen am Wochenende? -->
+      ¿Estás perdiendo pacientes los fines de semana?
+    </h2>
+    <p class="section-intro">
+      <!-- TRANSLATE-DE: Berliner Zahnarztpraxen verlieren mehr Termine als sie
+                        denken — und in mehr Sprachen, als sie bedienen können. -->
+      Las clínicas dentales en Berlin pierden más turnos de los que creen — y
+      en más idiomas de los que pueden atender.
+    </p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num">73%</div>
+        <div class="stat-text">
+          <!-- TRANSLATE-DE: der WhatsApp-Nachrichten an Zahnarztpraxen werden
+                            außerhalb der Sprechzeiten gesendet. -->
+          de los mensajes a clínicas dentales se envían fuera del horario de atención.
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">24%</div>
+        <div class="stat-text">
+          <!-- TRANSLATE-DE: der Berliner Bevölkerung hat einen Migrations-
+                            hintergrund — Türkisch, Arabisch, Englisch, Spanisch. -->
+          de la población berlinesa tiene background migrante — turco, árabe,
+          inglés, español.
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">30%</div>
+        <div class="stat-text">
+          <!-- TRANSLATE-DE: der Patient:innen kommen ohne aktive Erinnerung
+                            nicht zum Termin (Quelle: KZBV). -->
+          de los pacientes faltan al turno sin recordatorio activo (fuente: KZBV).
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   3. HOW IT WORKS — 3 steps
+   ════════════════════════════════════════════════════════════ #}
+<section>
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: So funktioniert es -->
+      Cómo funciona
+    </div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: 30 Minuten Setup. Ergebnisse ab Tag 1. -->
+      30 minutos de setup. Resultados desde el día 1.
+    </h2>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">
+          <!-- TRANSLATE-DE: Setup in 30 Minuten -->
+          Setup en 30 minutos
+        </div>
+        <p class="step-desc">
+          <!-- TRANSLATE-DE: WhatsApp Business verbinden, Kalender syncen, fertig.
+                            Keine technische Konfiguration, kein KI-Training. -->
+          Conectá tu WhatsApp Business, sincronizá tu calendario y listo. Sin
+          configuraciones técnicas, sin training de IA.
+        </p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">
+          <!-- TRANSLATE-DE: Pantra antwortet ab Tag 1 -->
+          Pantra responde desde el día 1
+        </div>
+        <p class="step-desc">
+          <!-- TRANSLATE-DE: 24/7, in Deutsch, Englisch und 2 Sprachen Ihrer Wahl.
+                            Natürliche Konversationen, keine Roboter-Sätze. -->
+          24/7, en alemán, inglés y los 2 idiomas que elijas. Conversaciones
+          naturales, no robóticas.
+        </p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">
+          <!-- TRANSLATE-DE: Sie sehen die Ergebnisse -->
+          Vos ves los resultados
+        </div>
+        <p class="step-desc">
+          <!-- TRANSLATE-DE: Wochenreport mit Buchungen, Anfragen und geretteten
+                            No-Shows. Entscheidungen mit Daten, nicht mit Bauchgefühl. -->
+          Reporte semanal con turnos reservados, no-shows evitados y mensajes
+          atendidos. Decisiones con data, no con suposiciones.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   4. FEATURES — 2x2 grid
+   ════════════════════════════════════════════════════════════ #}
+<section id="features">
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: Funktionen -->
+      Funciones
+    </div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Was Pantra für Ihre Praxis tut. -->
+      Qué hace Pantra para tu clínica.
+    </h2>
+    <div class="features-grid">
+      <div class="feature-tile">
+        <div class="feature-icon">🌍</div>
+        <h3 class="feature-title">
+          <!-- TRANSLATE-DE: Mehrsprachig -->
+          Multilingüe
+        </h3>
+        <p class="feature-desc">
+          <!-- TRANSLATE-DE: Atendé pacientes en alemán, inglés y 2 idiomas a elección
+                            (turco, árabe, español, francés, ruso, italiano, portugués).
+                            ¿Necesitás un 3er idioma? Sumalo por +€39/mes. -->
+          Atendé en alemán, inglés y 2 idiomas a tu elección — turco, árabe,
+          español, francés, ruso, italiano o portugués. Idioma extra: +€39/mes.
+        </p>
+      </div>
+      <div class="feature-tile">
+        <div class="feature-icon">🎤</div>
+        <h3 class="feature-title">
+          <!-- TRANSLATE-DE: Sprachnachrichten -->
+          Mensajes de voz
+        </h3>
+        <p class="feature-desc">
+          <!-- TRANSLATE-DE: Patient sendet eine Sprachnachricht — Pantra versteht
+                            sie, transkribiert und antwortet (auf Wunsch auch per
+                            Sprachnachricht zurück). -->
+          Tus pacientes mandan audio, Pantra lo entiende y responde — opcionalmente
+          también con audio. Ideal para pacientes mayores y migrantes.
+        </p>
+      </div>
+      <div class="feature-tile">
+        <div class="feature-icon">📅</div>
+        <h3 class="feature-title">
+          <!-- TRANSLATE-DE: Termin-Buchung -->
+          Reserva de turnos
+        </h3>
+        <p class="feature-desc">
+          <!-- TRANSLATE-DE: Pantra bucht direkt in Google Calendar oder Ihrem PVS
+                            (Dampsoft, CHARLY, Z1). Bestätigung mit dem Patienten
+                            vor jedem Schritt. -->
+          Pantra reserva directo en Google Calendar o tu PVS (Dampsoft, CHARLY,
+          Z1). Confirmación con el paciente antes de cerrar el turno.
+        </p>
+      </div>
+      <div class="feature-tile">
+        <div class="feature-icon">🔁</div>
+        <h3 class="feature-title">
+          <!-- TRANSLATE-DE: No-Show Recovery -->
+          No-Show Recovery
+        </h3>
+        <p class="feature-desc">
+          <!-- TRANSLATE-DE: Automatische Erinnerungen 48h, 24h und 2h vor dem
+                            Termin. Bei Absage bietet Pantra den Slot automatisch
+                            der Warteliste an. -->
+          Recordatorios automáticos a 48h, 24h y 2h. Si el paciente cancela,
+          Pantra ofrece el slot a la lista de espera automáticamente.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   5. SKY-BLUE CALLOUT BAND — DSGVO/compliance moment (used ONCE)
+   ════════════════════════════════════════════════════════════ #}
+<section style="padding: 0;">
+  <div class="callout-band">
+    <h3>
+      <!-- TRANSLATE-DE: Gebaut für deutsche Zahnarztpraxen. -->
+      Construido para clínicas dentales alemanas.
+    </h3>
+    <p>
+      <!-- TRANSLATE-DE: DSGVO-konform. AVV inklusive. Server in Frankfurt.
+                        Pantra ist ab Tag 1 compliance-ready für die deutsche
+                        Healthcare-Realität. -->
+      Cumple con DSGVO. AVV incluido. Servidores en Frankfurt. Pantra es
+      compliance-ready desde el día 1 para la realidad del healthcare alemán.
+    </p>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   6. SOCIAL PROOF — testimonial placeholder until 3 design partners signed
+   ════════════════════════════════════════════════════════════ #}
+<section>
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: Erfahrungsberichte -->
+      Lo que dicen las clínicas
+    </div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Frühe Zugangsstellen — Pilotprogramm 2026. -->
+      Programa piloto — primeros design partners.
+    </h2>
+
+    <div class="testimonial-placeholder">
+      <!-- TRANSLATE-DE: Bis September 2026: Berliner Zahnarztpraxen testen
+                        Pantra im Pilotprogramm. Erste Erfahrungsberichte mit
+                        Video-Testimonials und konkreten Zahlen veröffentlichen
+                        wir in Kürze hier. -->
+      Hasta septiembre 2026: clínicas dentales berlinesas están usando Pantra en
+      programa piloto. Próximamente publicaremos los primeros testimonios en
+      video con métricas concretas.
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   7. PRICING — single tier (Solo Plus only on /einzelpraxis)
+   ════════════════════════════════════════════════════════════ #}
+<section id="pricing">
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: Preise -->
+      Precios
+    </div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Ein Plan. Alles drin. -->
+      Un solo plan. Todo incluido.
+    </h2>
+    <p class="section-intro">
+      <!-- TRANSLATE-DE: Solo Plus ist für Einzelpraxen entwickelt — alle
+                        wichtigen Funktionen ohne komplizierte Tier-Vergleiche. -->
+      Solo Plus está pensado para clínicas individuales — todas las funciones
+      clave sin tablas comparativas confusas.
+    </p>
+
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-tier">Solo Plus</div>
+        <p class="pricing-tagline">
+          <!-- TRANSLATE-DE: Für Ihre Einzelpraxis -->
+          Para tu Einzelpraxis
+        </p>
+
+        <div class="pricing-price">
+          <span class="pricing-amount">€349</span>
+          <span class="pricing-period">
+            <!-- TRANSLATE-DE: / Monat -->
+            / mes
+          </span>
+        </div>
+        <div class="pricing-setup">
+          <!-- TRANSLATE-DE: + €399 einmalige Einrichtung -->
+          + €399 setup único
+        </div>
+
+        <ul class="pricing-features">
+          <li>
+            <!-- TRANSLATE-DE: DE + EN + 2 Sprachen Ihrer Wahl -->
+            DE + EN + 2 idiomas a tu elección
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Sprachnachrichten (Audio bidirektional) -->
+            Mensajes de voz (audio bidireccional)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Bis zu 2.000 Konversationen/Monat -->
+            Hasta 2.000 conversaciones/mes
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Terminbuchung + PVS-Integration -->
+            Reserva de turnos + integración PVS
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: No-Show Recovery automatisch -->
+            No-Show Recovery automático
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Telegram + Email Eskalation -->
+            Escalación por Telegram + email
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: AVV inklusive (DSGVO) -->
+            AVV incluido (DSGVO)
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Server in Frankfurt -->
+            Servidores en Frankfurt
+          </li>
+          <li>
+            <!-- TRANSLATE-DE: Premium Support (24h Antwortzeit) -->
+            Soporte premium (24h)
+          </li>
+        </ul>
+
+        <div class="pricing-promo">
+          <!-- TRANSLATE-DE: 💡 Jährlich zahlen → 2 Monate gratis -->
+          💡 Pago anual → 2 meses gratis (paga 10, recibe 12)
+        </div>
+
+        <div class="pricing-cta">
+          <a href="#get-started" class="btn-primary" style="width:100%;">
+            <!-- TRANSLATE-DE: 14 Tage kostenlos testen -->
+            Probá 14 días gratis
+          </a>
+          <a href="#get-started" class="btn-secondary" style="width:100%;">
+            <!-- TRANSLATE-DE: Live-Demo buchen -->
+            Agendá una demo en vivo
+          </a>
+        </div>
+        <div class="pricing-payment">
+          <!-- TRANSLATE-DE: Bezahlung: SEPA-Lastschrift oder Kreditkarte -->
+          Métodos de pago: SEPA-Lastschrift o tarjeta
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   8. TRUST BLOCK — 4 badges
+   ════════════════════════════════════════════════════════════ #}
+<section>
+  <div class="container">
+    <div class="section-eyebrow">
+      <!-- TRANSLATE-DE: Vertrauen -->
+      Compliance
+    </div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Compliance, das deutsche Zahnarztpraxen verlangen. -->
+      Compliance que las clínicas alemanas exigen.
+    </h2>
+
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-card-icon">🛡️</div>
+        <div class="trust-card-title">DSGVO-konform</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Datenverarbeitung nach europäischem Recht. -->
+          Procesamiento según el reglamento europeo.
+        </p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card-icon">📄</div>
+        <div class="trust-card-title">AVV inkl.</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Auftragsverarbeitungsvertrag, vor jedem Vertrag
+                            unterschriftsbereit. -->
+          Auftragsverarbeitungsvertrag firmable antes del primer pago.
+        </p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card-icon">🇩🇪</div>
+        <div class="trust-card-title">Server in DE</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Hosted in Frankfurt. Daten bleiben in Deutschland. -->
+          Hosted in Frankfurt. Tus datos se quedan en Alemania.
+        </p>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card-icon">💳</div>
+        <div class="trust-card-title">SEPA-Lastschrift</div>
+        <p class="trust-card-desc">
+          <!-- TRANSLATE-DE: Wie jeder andere deutsche Anbieter. -->
+          Como cualquier proveedor alemán de software.
+        </p>
+      </div>
+    </div>
+
+    <div class="trust-links">
+      <!-- TRANSLATE-DE: AVV als PDF herunterladen / Datenschutzerklärung -->
+      <a href="/avv">Descargar AVV (PDF)</a>
+      <a href="/datenschutz">Política de privacidad</a>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   9. FAQ
+   ════════════════════════════════════════════════════════════ #}
+<section id="faq">
+  <div class="container">
+    <div class="section-eyebrow">FAQ</div>
+    <h2 class="section-heading">
+      <!-- TRANSLATE-DE: Häufige Fragen. -->
+      Preguntas frecuentes.
+    </h2>
+
+    <div class="faq-list">
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Ist Pantra DSGVO-konform? -->
+          ¿Es Pantra conforme con DSGVO?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Ja. Pantra verarbeitet Daten nach europäischem Recht.
+                            Wir unterschreiben einen AVV mit jeder Praxis vor der
+                            ersten Verarbeitung. Server in Frankfurt. -->
+          Sí. Pantra procesa datos según el reglamento europeo. Firmamos AVV con
+          cada clínica antes de procesar mensajes. Servidores en Frankfurt.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Wo werden Patientendaten gespeichert? -->
+          ¿Dónde se almacenan los datos de los pacientes?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: In Servern in Frankfurt (AWS Frankfurt eu-central-1).
+                            PII wird automatisch in Logs redacted und max. 7 Tage
+                            aufbewahrt. -->
+          En servidores en Frankfurt (AWS eu-central-1). Los logs se redactan de
+          PII automáticamente y se retienen 7 días máximo.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Welche Praxisverwaltungssysteme werden unterstützt? -->
+          ¿Qué sistemas de gestión (PVS) son compatibles?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Dampsoft, CHARLY, Z1 via Webhook. Andere Systeme
+                            integrieren wir über Google Calendar als Fallback.
+                            Wenn Ihr PVS nicht in der Liste ist — kontaktieren
+                            Sie uns. -->
+          Dampsoft, CHARLY, Z1 vía webhook. Otros se integran vía Google Calendar
+          como fallback. Si tu PVS no está en la lista, contactanos.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Wie lange dauert die Einrichtung? -->
+          ¿Cuánto tarda la configuración?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: 30 Minuten. Wir helfen Ihnen, WhatsApp Business und
+                            Ihren Kalender zu verbinden. Keine technischen
+                            Kenntnisse nötig. -->
+          30 minutos. Te ayudamos a conectar tu WhatsApp Business y tu calendario.
+          No necesitás conocimientos técnicos.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Was passiert, wenn Pantra eine Frage nicht versteht? -->
+          ¿Qué pasa si Pantra no entiende una pregunta?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Pantra eskaliert automatisch an Ihr Team via Telegram
+                            oder Email. Sie haben immer die letzte Kontrolle. Pantra
+                            trifft nie medizinische oder kommerzielle Entscheidungen. -->
+          Pantra deriva automáticamente a tu equipo vía Telegram o email. Vos
+          tenés siempre el control. Pantra nunca toma decisiones médicas ni
+          comerciales sensibles.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Kann ich Pantra abbestellen? -->
+          ¿Puedo cancelar Pantra cuando quiera?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Ja. Monatliche Kündigung ohne Bindung (außer Sie
+                            wählen den jährlichen Vorauszahlungsplan). Ihre Daten
+                            werden gemäß DSGVO exportiert und gelöscht. -->
+          Sí. Cancelación mensual sin compromiso (excepto plan anual prepago).
+          Tus datos se exportan y borran según DSGVO.
+        </div>
+      </details>
+
+      <details class="faq-row">
+        <summary>
+          <!-- TRANSLATE-DE: Welche WhatsApp-Nummer wird verwendet? -->
+          ¿Qué número de WhatsApp se usa?
+        </summary>
+        <div class="faq-row-content">
+          <!-- TRANSLATE-DE: Die Nummer Ihrer Praxis. Wir verbinden uns über die
+                            offizielle WhatsApp Business Cloud API von Meta. Die
+                            Nummer, die Ihre Patient:innen kennen, bleibt gleich. -->
+          El número de tu clínica. Conectamos vía WhatsApp Business Cloud API
+          (oficial de Meta). No se cambia el número que tus pacientes ya conocen.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════
+   10. GET STARTED form band — sage surface, pill inputs
+   ════════════════════════════════════════════════════════════ #}
+<section id="get-started" style="padding: 0;">
+  <div class="get-started-band">
+    <div>
+      <h3>
+        <!-- TRANSLATE-DE: Loslegen. -->
+        Empezá hoy.
+      </h3>
+      <p class="lead">
+        <!-- TRANSLATE-DE: 14 Tage kostenlos. Keine Kreditkarte. Keine Installation. -->
+        14 días gratis. Sin tarjeta. Sin instalación.
+      </p>
+      <p class="get-started-meta">
+        <!-- TRANSLATE-DE: Wir antworten innerhalb von 24 Stunden mit einem
+                          persönlichen Onboarding-Termin und einem AVV-Entwurf
+                          zur Prüfung. -->
+        Te respondemos en 24h con una cita de onboarding personalizada y un
+        borrador de AVV para que tu equipo legal lo revise.
+      </p>
+    </div>
+    <form class="get-started-form" id="trial-form" method="post" action="/api/leads/trial">
+      <input class="form-input-on-sage" type="text" name="contact_name" placeholder="Name *" required>
+      <input class="form-input-on-sage" type="text" name="clinic_name" placeholder="Praxisname *" required>
+      <input class="form-input-on-sage" type="email" name="email" placeholder="Business E-Mail *" required>
+      <input class="form-input-on-sage" type="tel" name="phone" placeholder="Telefon (optional)">
+
+      <label class="form-checkbox-row">
+        <input type="checkbox" name="consent_dsgvo" required>
+        <span>
+          <!-- TRANSLATE-DE: Ich stimme der Verarbeitung meiner Daten gemäß
+                            <a href="/datenschutz">Datenschutzerklärung</a> zu. -->
+          Acepto el procesamiento de mis datos según la
+          <a href="/datenschutz">política de privacidad</a>.
+        </span>
+      </label>
+
+      <button type="submit" class="btn-light-pill">
+        <!-- TRANSLATE-DE: 14 Tage kostenlos starten -->
+        Iniciar 14 días gratis
+      </button>
+
+      <div class="form-status" id="form-status"></div>
+    </form>
+  </div>
+</section>
+
+{# Inline form-handling JS — tiny, no framework. Submits via fetch and shows
+   inline status. Falls back to native submit if JS is disabled. #}
+<script>
+(function() {
+  const form = document.getElementById('trial-form');
+  if (!form) return;
+  const status = document.getElementById('form-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    status.className = 'form-status';
+    status.textContent = '';
+
+    const data = Object.fromEntries(new FormData(form));
+    data.consent_dsgvo = !!data.consent_dsgvo;
+    data.source = 'einzelpraxis';
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        status.className = 'form-status success';
+        status.textContent = 'Danke! Wir melden uns innerhalb von 24 Stunden bei Ihnen.';
+        form.reset();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        status.className = 'form-status error';
+        status.textContent = err.detail || 'Etwas ist schiefgelaufen. Bitte erneut versuchen.';
+      }
+    } catch (err) {
+      status.className = 'form-status error';
+      status.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+    }
+  });
+})();
+</script>
+
+{% endblock %}

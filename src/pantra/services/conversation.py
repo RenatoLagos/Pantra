@@ -27,6 +27,7 @@ from pantra.db import session_scope
 from pantra.handoff import dispatch as dispatch_handoff
 from pantra.llm.classifier import Classifier, ClassifierOutput
 from pantra.llm.engine import ConversationEngine, EngineResult
+from pantra.llm.fast_reply import FastReplyResult, reply_smalltalk
 from pantra.llm.memory.window import WindowMessage, load_window
 from pantra.llm.prompts.system import build_system_prompt
 from pantra.llm.router import choose
@@ -47,6 +48,7 @@ from pantra.models import (
     Service,
 )
 from pantra.privacy import pii
+from pantra.services import usage
 from pantra.tools import REGISTRY as TOOL_REGISTRY
 from pantra.tools import ToolContext, anthropic_tool_definitions, get_tool
 
@@ -98,6 +100,24 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
 
     if not await _persist_inbound_idempotent(session, conversation, inbound):
         return OutboundMessage(skipped_reason="duplicate_delivery")
+
+    # Pricing v4 hard-limit guard — no LLM/STT spend once the plan cap is
+    # hit. Demos always bypass (their cost is marketing). Owner gets ONE
+    # Telegram/email per day via the existing HandoffTask dispatch.
+    if not business.is_demo:
+        quota = await usage.quota_status(session, business)
+        if quota.exceeded:
+            await usage.maybe_notify_quota_exceeded(
+                session, business, conversation, quota
+            )
+            log.info(
+                "conversation.quota_exceeded",
+                business_id=str(business.id),
+                plan=quota.plan,
+                used=quota.used,
+                limit=quota.limit,
+            )
+            return OutboundMessage(skipped_reason="quota_exceeded")
 
     if conversation.status == ConversationStatus.human_needed:
         if not business.is_demo:
@@ -160,59 +180,87 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
         # Demo: handoff is recorded for analytics, but we keep replying so
         # the prospect can keep evaluating the bot.
 
-    # LLM tool-use loop. The `messages` list grows across turns: each
-    # assistant turn (with tool_use blocks) and each user turn (with
-    # tool_result blocks) is appended in place. Anthropic requires every
-    # tool_result block to have a matching tool_use in the prior message.
-    history = await load_window(session, conversation_id=conversation.id)
-    language = (
-        conversation.language
-        or customer.preferred_language
-        or business.default_language
-    )
-    knowledge = await _load_knowledge(session, business, language=language)
-    system_prompt = build_system_prompt(
-        business=business,
-        customer=customer,
-        conversation=conversation,
-        knowledge_snippets=knowledge,
-    )
-    engine = ConversationEngine()
-    tool_defs = anthropic_tool_definitions(list(TOOL_REGISTRY.values()))
-
-    messages: list[dict] = [
-        {"role": m.role, "content": m.content}
-        for m in history
-        if m.role != "system"
-    ]
-
+    # Decide path: trivial smalltalk (greetings/thanks/goodbye) gets a
+    # cheap Haiku-only reply. Everything else goes through the full Sonnet
+    # engine + tool-use loop. Saves ~5x cost and ~3x latency on the ~10-15%
+    # of inbound traffic that is just chat noise — without losing tool
+    # capability for real intents.
     reply_text: str | None = None
-    for _ in range(MAX_TOOL_TURNS):
-        result = await engine.step(
-            system_prompt=system_prompt,
-            messages=messages,
-            tool_definitions=tool_defs,
+
+    if classification.intent == "smalltalk" and not classification.needs_human:
+        fast_language = (
+            classification.language
+            or conversation.language
+            or customer.preferred_language
+            or business.default_language
         )
-        await _persist_ai_run(session, conversation, role="main", engine_result=result)
+        fast_result = await reply_smalltalk(
+            text=inbound.text,
+            language=fast_language,
+            business_name=business.name,
+        )
+        await _persist_ai_run(
+            session,
+            conversation,
+            role="fast_reply",
+            fast_reply_result=fast_result,
+        )
+        reply_text = fast_result.reply_text
+    else:
+        # LLM tool-use loop. The `messages` list grows across turns: each
+        # assistant turn (with tool_use blocks) and each user turn (with
+        # tool_result blocks) is appended in place. Anthropic requires
+        # every tool_result block to have a matching tool_use in the prior
+        # message.
+        history = await load_window(session, conversation_id=conversation.id)
+        language = (
+            conversation.language
+            or customer.preferred_language
+            or business.default_language
+        )
+        knowledge = await _load_knowledge(session, business, language=language)
+        system_prompt = build_system_prompt(
+            business=business,
+            customer=customer,
+            conversation=conversation,
+            knowledge_snippets=knowledge,
+        )
+        engine = ConversationEngine()
+        tool_defs = anthropic_tool_definitions(list(TOOL_REGISTRY.values()))
 
-        if result.tool_calls:
-            # Preserve the assistant turn so the next request has the
-            # corresponding tool_use blocks for our tool_result blocks.
-            messages.append({"role": "assistant", "content": result.assistant_blocks})
+        messages: list[dict] = [
+            {"role": m.role, "content": m.content}
+            for m in history
+            if m.role != "system"
+        ]
 
-            tool_results = await _execute_tools(
-                session, business, customer, conversation, inbound, result.tool_calls
+        for _ in range(MAX_TOOL_TURNS):
+            result = await engine.step(
+                system_prompt=system_prompt,
+                messages=messages,
+                tool_definitions=tool_defs,
             )
-            messages.append({"role": "user", "content": tool_results})
+            await _persist_ai_run(session, conversation, role="main", engine_result=result)
 
-            if any(tc.get("name") == "handoff_to_human" for tc in result.tool_calls):
-                if not business.is_demo:
-                    return OutboundMessage(handoff_triggered=True)
-                # Demo: tool already logged + dispatched (or skipped). Keep
-                # looping so the engine produces a final user-visible reply.
-        else:
-            reply_text = result.reply_text
-            break
+            if result.tool_calls:
+                # Preserve the assistant turn so the next request has the
+                # corresponding tool_use blocks for our tool_result blocks.
+                messages.append({"role": "assistant", "content": result.assistant_blocks})
+
+                tool_results = await _execute_tools(
+                    session, business, customer, conversation, inbound, result.tool_calls
+                )
+                messages.append({"role": "user", "content": tool_results})
+
+                if any(tc.get("name") == "handoff_to_human" for tc in result.tool_calls):
+                    if not business.is_demo:
+                        return OutboundMessage(handoff_triggered=True)
+                    # Demo: tool already logged + dispatched (or skipped).
+                    # Keep looping so the engine produces a final
+                    # user-visible reply.
+            else:
+                reply_text = result.reply_text
+                break
 
     if not reply_text:
         return OutboundMessage(skipped_reason="empty_engine_reply")
@@ -385,18 +433,24 @@ async def _persist_ai_run(
     role: str,
     classification: ClassifierOutput | None = None,
     engine_result: EngineResult | None = None,
+    fast_reply_result: FastReplyResult | None = None,
     prompt_text: str | None = None,
 ) -> None:
     choice = choose(role)  # type: ignore[arg-type]
+    # Engine and fast-reply expose the same shape (input_tokens,
+    # output_tokens, latency_ms, cache_*); whichever is provided wins.
+    src = engine_result or fast_reply_result
     run = AIRun(
         conversation_id=conversation.id,
         role=role,
         provider=choice.provider,
         model=choice.model,
         classifier_output=classification.model_dump() if classification else None,
-        input_tokens=engine_result.input_tokens if engine_result else None,
-        output_tokens=engine_result.output_tokens if engine_result else None,
-        latency_ms=engine_result.latency_ms if engine_result else None,
+        input_tokens=src.input_tokens if src else None,
+        output_tokens=src.output_tokens if src else None,
+        cache_read_tokens=src.cache_read_tokens if src else None,
+        cache_creation_tokens=src.cache_creation_tokens if src else None,
+        latency_ms=src.latency_ms if src else None,
         redacted_prompt=prompt_text,
     )
     session.add(run)

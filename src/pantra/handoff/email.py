@@ -16,6 +16,45 @@ from pantra.models import HandoffTask
     wait=wait_exponential(multiplier=0.5, max=4),
     reraise=True,
 )
+async def send_resend_raw(
+    *,
+    to: str,
+    subject: str,
+    html: str | None = None,
+    text: str | None = None,
+) -> bool:
+    """Generic Resend sender — used by handoff dispatcher and by marketing
+    lead capture. Returns True iff the email was sent. No-ops cleanly when
+    no API key is configured (dev / staging without Resend).
+    """
+    if not settings.resend_api_key:
+        log.warning("email.no_api_key", to=to)
+        return False
+
+    payload: dict[str, object] = {
+        "from": settings.handoff_email_from,
+        "to": [to],
+        "subject": subject,
+    }
+    if html:
+        payload["html"] = html
+    if text:
+        payload["text"] = text
+    if not html and not text:
+        # Resend requires at least one body. Fall back to an empty text.
+        payload["text"] = ""
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+            json=payload,
+        )
+        r.raise_for_status()
+    log.info("email.sent", to=to, subject=subject)
+    return True
+
+
 async def send_email(
     task: HandoffTask,
     *,
@@ -26,7 +65,9 @@ async def send_email(
         return
 
     if settings.email_provider == "resend":
-        await _send_via_resend(task, business_id=business_id, conversation_id=conversation_id)
+        await _send_handoff_via_resend(
+            task, business_id=business_id, conversation_id=conversation_id
+        )
     else:
         log.warning(
             "handoff.email.provider_not_supported",
@@ -34,16 +75,12 @@ async def send_email(
         )
 
 
-async def _send_via_resend(
+async def _send_handoff_via_resend(
     task: HandoffTask,
     *,
     business_id: uuid.UUID,
     conversation_id: uuid.UUID,
 ) -> None:
-    if not settings.resend_api_key:
-        log.warning("handoff.email.no_api_key")
-        return
-
     body_html = (
         f"<h2>Handoff requested</h2>"
         f"<p><strong>Reason:</strong> {task.reason}<br>"
@@ -53,17 +90,10 @@ async def _send_via_resend(
         f"<h3>Summary</h3><pre>{task.summary}</pre>"
         f"<p><small>handoff_id: {task.id}</small></p>"
     )
-
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
-            json={
-                "from": settings.handoff_email_from,
-                "to": [settings.handoff_email_to],
-                "subject": f"[Pantra] Handoff: {task.reason}",
-                "html": body_html,
-            },
-        )
-        r.raise_for_status()
-    log.info("handoff.email.sent", handoff_id=str(task.id))
+    sent = await send_resend_raw(
+        to=settings.handoff_email_to,
+        subject=f"[Pantra] Handoff: {task.reason}",
+        html=body_html,
+    )
+    if sent:
+        log.info("handoff.email.sent", handoff_id=str(task.id))

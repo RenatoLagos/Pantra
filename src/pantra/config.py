@@ -95,6 +95,13 @@ class Settings(BaseSettings):
     pii_redaction_enabled: bool = True
     log_retention_days: int = 7
 
+    # ─── Admin ──
+    # Shared bearer token guarding /admin/* endpoints (usage analytics,
+    # quota management, etc.). MUST be set in production; empty default
+    # locks the admin surface so a forgotten secret never accidentally
+    # exposes data.
+    admin_token: str = ""
+
     # ─── Calendar ──
     google_calendar_client_email: str = ""
     google_calendar_private_key: str = ""

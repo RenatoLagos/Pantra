@@ -61,3 +61,9 @@ logs/
 
 # Generated audio files (TTS output + uploaded voice notes — sensitive PII)
 storage/
+
+# OS installers / downloads
+*.deb
+*.dmg
+*.exe
+*.msi

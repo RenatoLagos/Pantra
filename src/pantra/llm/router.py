@@ -6,7 +6,7 @@ from typing import Literal
 from pantra.config import settings
 
 Provider = Literal["anthropic", "gemini", "openai"]
-Role = Literal["classifier", "main", "summarizer"]
+Role = Literal["classifier", "main", "summarizer", "fast_reply"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,11 +19,12 @@ class ModelChoice:
 def choose(role: Role) -> ModelChoice:
     """Resolve which model to use for a given role.
 
-    MVP: 1 classifier + 1 main + summariser piggy-backs on classifier.
-    No multi-tier routing — that's a Phase-2 decision driven by real cost
-    and quality data.
+    MVP: 1 classifier (Haiku) + 1 main (Sonnet). The summariser and the
+    fast_reply smalltalk path piggy-back on the classifier tier — same
+    model, different system prompt — to keep cost and latency low for
+    workloads that don't need tools or deep reasoning.
     """
-    if role == "classifier" or role == "summarizer":
+    if role in ("classifier", "summarizer", "fast_reply"):
         return ModelChoice(
             role=role,
             provider=settings.llm_classifier_provider,

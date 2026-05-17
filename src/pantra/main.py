@@ -7,7 +7,11 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from pantra.api.admin.router import router as admin_router
 from pantra.api.demo.router import router as demo_router
+from pantra.api.landing.router import router as landing_router
+from pantra.api.leads.router import router as leads_router
+from pantra.api.legal.router import router as legal_router
 from pantra.api.webhooks.whatsapp import router as whatsapp_router
 from pantra.config import settings
 from pantra.logging import configure_logging, log
@@ -49,6 +53,11 @@ app.mount(
     name="demo-static",
 )
 app.mount(
+    "/static/landing",
+    StaticFiles(directory=str(PROJECT_ROOT / "static" / "landing")),
+    name="landing-static",
+)
+app.mount(
     "/static/audio",
     StaticFiles(directory=settings.audio_storage_path, check_dir=False),
     name="audio-static",
@@ -56,3 +65,7 @@ app.mount(
 
 app.include_router(whatsapp_router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(demo_router, tags=["demo"])
+app.include_router(landing_router, tags=["landing"])
+app.include_router(leads_router, tags=["leads"])
+app.include_router(legal_router, tags=["legal"])
+app.include_router(admin_router)
