@@ -67,3 +67,6 @@ storage/
 *.dmg
 *.exe
 *.msi
+
+# Local tooling metadata
+.atl/
