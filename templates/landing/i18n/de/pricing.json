@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "Preise — Pantra für Zahnarztpraxen | Solo, Solo Plus, Multi",
+    "description": "Pantra Preise: Solo €149/Monat, Solo Plus €349/Monat (Empfohlen), Multi für Gemeinschaftspraxen. Mehrsprachig, DSGVO-konform, AVV inklusive."
+  },
+  "header": {
+    "eyebrow": "Preise",
+    "title": "Einfache Preise. Keine Überraschungen.",
+    "subtitle": "Wählen Sie den Plan, der zu Ihrer Praxis passt. Wechseln Sie jederzeit. Monatlich kündbar, ohne Vertragsbindung."
+  },
+  "tier_solo": {
+    "tagline": "Für traditionelle Einzelpraxen",
+    "period": "/ Monat",
+    "setup": "+ €199 einmalige Einrichtung",
+    "feature_lang": "Deutsch + Englisch",
+    "feature_conversations": "600 Konversationen/Monat",
+    "feature_text_only": "Nur Text (kein Audio)",
+    "feature_reminders": "Erinnerungen 24h vorher",
+    "feature_email_escalation": "Email-Eskalation",
+    "feature_avv": "AVV inklusive (DSGVO)",
+    "feature_frankfurt": "Server in Frankfurt",
+    "feature_support": "Support 48h"
+  },
+  "tier_solo_plus": {
+    "badge": "Empfohlen",
+    "tagline": "Für moderne Einzelpraxen",
+    "period": "/ Monat",
+    "setup": "+ €399 einmalige Einrichtung",
+    "feature_lang_choice": "2 Sprachen Ihrer Wahl",
+    "feature_conversations": "2.000 Konversationen/Monat",
+    "feature_audio": "Audio bidirektional (STT + TTS)",
+    "feature_reminders": "Multi-touch Erinnerungen (48h / 24h / 2h)",
+    "feature_noshow": "No-Show Recovery automatisch",
+    "feature_pvs": "PVS-Integration (Dampsoft, CHARLY, Z1)",
+    "feature_escalation": "Telegram + Email Eskalation",
+    "feature_avv_frankfurt": "AVV inkl. + Server in Frankfurt",
+    "feature_support": "Premium Support 24h"
+  },
+  "tier_multi": {
+    "badge": "Demnächst",
+    "tagline": "Für Gemeinschaftspraxen (2-4 Behandler)",
+    "price_from": "ab €499",
+    "period": "/ Monat",
+    "setup": "Custom Onboarding",
+    "feature_everything": "Alles aus Solo Plus +",
+    "feature_dentists": "Bis zu 4 Behandler / Kalender",
+    "feature_triage": "Intelligente Mehr-Doktor-Triage",
+    "feature_services": "Mehrere Services pro Behandler",
+    "feature_dashboards": "Erweiterte Analytics-Dashboards",
+    "feature_account_manager": "Dedizierter Account Manager",
+    "cta": "Frühzugang anfragen"
+  },
+  "addons": {
+    "eyebrow": "Add-ons",
+    "heading": "Extras, die Sie buchen, wenn Sie sie brauchen.",
+    "lang_title": "Zusätzliche Sprache",
+    "lang_price": "+€39 / Monat",
+    "lang_desc": "Pro zusätzliche Sprache (3., 4., …). Solo Plus enthält bereits 2 Sprachen Ihrer Wahl. Verfügbar: TR, AR, ES, FR, RU, IT, PT.",
+    "onboarding_title": "Onboarding vor Ort",
+    "onboarding_price": "+€199 einmalig",
+    "onboarding_desc": "Persönlicher Termin mit dem Gründer in Ihrer Praxis. Komplettes Setup + Team-Schulung in 90 Min.",
+    "overage_title": "Überschreitung",
+    "overage_price": "€0,15 / Konv.",
+    "overage_desc": "Wenn Sie das monatliche Limit Ihres Plans überschreiten, werden zusätzliche Konversationen nach Verbrauch berechnet.",
+    "annual_title": "Jährliche Zahlung",
+    "annual_price": "2 Monate gratis",
+    "annual_desc": "12 Monate vorab zahlen, 2 Monate Rabatt erhalten. Auf Anfrage verfügbar."
+  },
+  "limits": {
+    "heading": "Was zählt als eine \"Konversation\"?",
+    "p1": "Eine Konversation ist ein Gespräch zwischen einem Patienten und Pantra. Egal ob 3 oder 50 Nachrichten in dieser Gesprächsrunde — es zählt als eine Konversation.",
+    "p2": "Wenn der Patient nach 30 Minuten Inaktivität wieder schreibt, beginnt eine neue Konversation.",
+    "solo_label": "Solo — Limit",
+    "solo_value": "600 / Monat",
+    "solo_plus_label": "Solo Plus — Limit",
+    "solo_plus_value": "2.000 / Monat",
+    "overage_label": "Überschreitung pro Konversation",
+    "overage_value": "€0,15",
+    "avg_label": "Durchschnittliche Einzelpraxis",
+    "avg_value": "~150–500 / Monat"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Fragen zum Pricing.",
+    "q1": "Was passiert, wenn ich das monatliche Limit überschreite?",
+    "a1": "Pantra benachrichtigt Sie sofort per Telegram + Email. Sie haben zwei Optionen: (1) Upgrade des Plans, (2) Aktivierung des Verbrauchsmodells (€0,15/zusätzliche Konversation). Wir blockieren den Service nicht ohne Vorwarnung.",
+    "q2": "Kann ich später den Plan ändern?",
+    "a2": "Ja. Upgrade von Solo zu Solo Plus ist sofort wirksam, pro-rata berechnet. Downgrade gilt ab dem nächsten Abrechnungszyklus. Keine Strafen, keine Fragen.",
+    "q3": "Gibt es eine Mindestlaufzeit?",
+    "a3": "Nein. Monatliche Kündigung mit 30 Tagen Frist. Wenn Sie sich für die jährliche Vorauszahlung entscheiden (2 Monate gratis), gilt ein 12-Monats-Zeitraum.",
+    "q4": "Welche Zahlungsmethoden akzeptieren Sie?",
+    "a4": "SEPA-Lastschrift (Standard für deutsche Praxen) oder Kreditkarte (VISA, MasterCard). Rechnung auf Wunsch monatlich oder jährlich.",
+    "q5": "Was kostet ein zusätzlicher Sprachkanal?",
+    "a5": "+€39/Monat pro zusätzlicher Sprache. Solo Plus enthält bereits 2 Sprachen Ihrer Wahl. Ein dritter Sprachkanal (z. B. Arabisch nach Türkisch und Spanisch) wäre +€39/Monat. Volumenrabatt ab 4 Sprachen verfügbar — fragen Sie einfach nach.",
+    "q6": "Können sich die Preise später ändern?",
+    "a6": "Wir behalten uns laut Vertrag eine Preisanpassung von bis zu 8% pro Jahr vor, mit 60 Tagen Ankündigung (Standard für deutsche B2B-SaaS). Bei Vorauszahlung sichern Sie sich den aktuellen Preis für 12 Monate.",
+    "q7": "Bieten Sie Rabatte für mehrere Praxen oder Ketten?",
+    "a7": "Ja. Für 3+ Praxen unter derselben Eigentümerschaft haben wir individuelle Enterprise-Tarife — bitte kontaktieren Sie uns für ein Angebot.",
+    "q8": "Gibt es ein kostenloses Probeangebot?",
+    "a8": "Ja — 14 Tage kostenlos, ohne Kreditkarte, ohne Installation. Sie testen Pantra in voller Solo-Plus-Konfiguration. Nach 14 Tagen wechseln Sie automatisch auf den von Ihnen gewählten Plan oder kündigen einfach."
+  },
+  "trust": {
+    "heading": "In jedem Plan enthalten.",
+    "dsgvo_desc": "Datenverarbeitung nach europäischem Recht.",
+    "avv_title": "AVV inkl.",
+    "avv_desc": "Auftragsverarbeitungsvertrag vor jedem Vertrag unterschriftsbereit.",
+    "frankfurt_title": "Server in DE",
+    "frankfurt_desc": "Hosted in Frankfurt. Daten bleiben in Deutschland.",
+    "sepa_desc": "Wie jeder andere deutsche Anbieter."
+  },
+  "cta": {
+    "heading": "Bereit, Ihre Praxis zu entlasten?",
+    "cta_learn_more": "Mehr über Pantra erfahren"
+  }
+}

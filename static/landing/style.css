@@ -92,6 +92,23 @@ img { max-width: 100%; display: block; }
 .nav-lang a { padding: 4px 8px; }
 .nav-lang a.active { color: var(--ink); font-weight: 500; }
 
+/* Hamburger toggle — hidden on desktop, shown ≤720px (see media query below). */
+.nav-toggle {
+  display: none;
+  flex-direction: column; justify-content: center; gap: 5px;
+  width: 40px; height: 40px; padding: 8px;
+  background: none; border: none; cursor: pointer;
+  justify-self: end;
+}
+.nav-toggle-bar {
+  display: block; width: 22px; height: 2px;
+  background: var(--ink); border-radius: 2px;
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.nav.open .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav.open .nav-toggle-bar:nth-child(2) { opacity: 0; }
+.nav.open .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
 /* ────────────────────────────────────────────────────────────
  * Buttons — pills only (rounded.full = 999px)
  * ────────────────────────────────────────────────────────────*/
@@ -924,8 +941,18 @@ section { padding: 96px 0; }
 }
 
 @media (max-width: 720px) {
-  .nav { padding: 12px 20px; height: auto; min-height: 56px; grid-template-columns: 1fr auto; }
-  .nav-links { display: none; }
+  .nav {
+    display: flex; flex-wrap: wrap; align-items: center;
+    padding: 12px 20px; height: auto; min-height: 56px; row-gap: 8px;
+  }
+  .nav-brand { flex: 1; }
+  .nav-toggle { display: flex; }
+  .nav-links,
+  .nav-cta-wrap { display: none; flex-basis: 100%; }
+  .nav.open .nav-links {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding-top: 8px;
+  }
+  .nav.open .nav-cta-wrap { display: flex; justify-content: flex-start; }
   .container { padding: 0 20px; }
   .hero { padding: 32px 20px 64px; }
   .hero h1 { font-size: 36px; letter-spacing: -1px; }

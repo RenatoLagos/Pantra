@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "Pantra — the AI assistant for your dental practice | 24/7, multilingual"
+  },
+  "hero": {
+    "title": "The AI assistant for your dental practice. 24/7. Multilingual.",
+    "lead": "Pantra replies on WhatsApp, books appointments, and cuts no-shows by 30%. In German, English, and 2 more languages of your choice.",
+    "cta_trial": "Start your free 14-day trial",
+    "cta_demo": "Book a live demo",
+    "mockup_aria": "WhatsApp conversation mockup"
+  },
+  "problem": {
+    "eyebrow": "The problem",
+    "heading": "Losing patients every weekend?",
+    "intro": "Berlin dental practices lose more appointments than they realize — in more languages than they can cover.",
+    "stat1_text": "of WhatsApp messages to dental practices arrive outside opening hours.",
+    "stat2_text": "of Berlin's population has a migration background — Turkish, Arabic, English, Spanish.",
+    "stat3_text": "of patients miss their appointment without an active reminder (source: KZBV)."
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "heading": "30-minute setup. Results from day one.",
+    "step1_title": "Set up in 30 minutes",
+    "step1_desc": "Connect WhatsApp Business, sync your calendar, done. No technical configuration, no AI training required.",
+    "step2_title": "Pantra replies from day one",
+    "step2_desc": "24/7, in German, English, and 2 languages of your choice. Natural conversations, not robotic scripts.",
+    "step3_title": "You see the results",
+    "step3_desc": "A weekly report with bookings, inquiries, and recovered no-shows. Decisions backed by data, not gut feeling."
+  },
+  "features": {
+    "eyebrow": "Features",
+    "heading": "What Pantra does for your practice.",
+    "card1_title": "Multilingual",
+    "card1_desc": "Talk to patients in German, English, and 2 languages of your choice — Turkish, Arabic, Spanish, French, Russian, Italian, or Portuguese. Need an extra language? +€39/month.",
+    "card2_title": "Voice messages",
+    "card2_desc": "A patient sends a voice message — Pantra understands it, transcribes it, and replies (with a voice message back too, if you like). Ideal for older and migrant patients.",
+    "card3_title": "Appointment booking",
+    "card3_desc": "Pantra books directly into Google Calendar or your practice management system (Dampsoft, CHARLY, Z1), confirming with the patient before every step.",
+    "card4_title": "No-show recovery",
+    "card4_desc": "Automatic reminders 48h, 24h, and 2h before the appointment. If a patient cancels, Pantra automatically offers the slot to the waitlist."
+  },
+  "callout": {
+    "heading": "Built for German dental practices.",
+    "text": "GDPR-compliant. DPA included. Servers in Frankfurt. Pantra is compliance-ready from day one for the realities of German healthcare."
+  },
+  "social": {
+    "eyebrow": "Testimonials",
+    "heading": "Early access — 2026 pilot program.",
+    "placeholder_text": "Through September 2026: Berlin dental practices are testing Pantra in our pilot program. The first video testimonials with real numbers will be published here soon."
+  },
+  "pricing": {
+    "eyebrow": "Pricing",
+    "heading": "One plan. Everything included.",
+    "intro": "Solo Plus is built for solo practices — every key feature, without confusing tier comparisons.",
+    "tagline": "Built for your solo practice",
+    "period": "/ month",
+    "setup": "+ €399 one-time setup",
+    "feature_lang": "German + English + 2 languages of your choice",
+    "feature_audio": "Voice messages (two-way audio)",
+    "feature_conversations": "Up to 2,000 conversations/month",
+    "feature_pvs": "Appointment booking + PMS integration",
+    "feature_noshow": "Automatic no-show recovery",
+    "feature_escalation": "Telegram + email escalation",
+    "feature_avv": "DPA included (GDPR)",
+    "feature_frankfurt": "Servers in Frankfurt",
+    "feature_support": "Premium support (24h response time)",
+    "promo": "💡 Pay annually → get 2 months free (pay for 10, get 12)",
+    "cta_trial": "Start your free 14-day trial",
+    "cta_demo": "Book a live demo",
+    "payment": "Payment: SEPA direct debit or credit card"
+  },
+  "trust": {
+    "eyebrow": "Compliance",
+    "heading": "The compliance German dental practices demand.",
+    "card1_desc": "Data processing under European law.",
+    "card2_desc": "Data processing agreement, ready to sign before your first contract.",
+    "card3_desc": "Hosted in Frankfurt. Your data stays in Germany.",
+    "card4_desc": "Just like any other German provider.",
+    "link_avv_pdf": "Download DPA (PDF)",
+    "link_privacy": "Privacy policy"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Frequently asked questions.",
+    "q1": "Is Pantra GDPR-compliant?",
+    "a1": "Yes. Pantra processes data under European law. We sign a data processing agreement with every practice before any data is processed. Servers in Frankfurt.",
+    "q2": "Where is patient data stored?",
+    "a2": "On servers in Frankfurt (AWS Frankfurt eu-central-1). Personal data is automatically redacted from logs and kept for a maximum of 7 days.",
+    "q3": "Which practice management systems are supported?",
+    "a3": "Dampsoft, CHARLY, and Z1 via webhook. Other systems integrate through Google Calendar as a fallback. If your system isn't on the list, just get in touch.",
+    "q4": "How long does setup take?",
+    "a4": "30 minutes. We help you connect WhatsApp Business and your calendar. No technical knowledge required.",
+    "q5": "What happens if Pantra doesn't understand a question?",
+    "a5": "Pantra automatically escalates to your team via Telegram or email. You always have the final say — Pantra never makes medical or sensitive business decisions.",
+    "q6": "Can I cancel Pantra anytime?",
+    "a6": "Yes. Cancel monthly with no lock-in (unless you choose the annual prepay plan). Your data is exported and deleted in accordance with GDPR.",
+    "q7": "Which WhatsApp number is used?",
+    "a7": "Your practice's own number. We connect through Meta's official WhatsApp Business Cloud API — the number your patients already know stays exactly the same."
+  },
+  "cta": {
+    "heading": "Get started.",
+    "lead": "14 days free. No credit card. No installation.",
+    "meta": "We'll respond within 24 hours with a personal onboarding call and a draft DPA for your team to review.",
+    "consent_prefix": "I agree to the processing of my data in accordance with the",
+    "consent_link": "privacy policy",
+    "consent_suffix": ".",
+    "submit": "Start your free 14-day trial"
+  },
+  "form": {
+    "placeholder_name": "Name *",
+    "placeholder_clinic": "Practice name *",
+    "placeholder_email": "Business email *",
+    "placeholder_phone": "Phone (optional)",
+    "success": "Thanks! We'll get back to you within 24 hours.",
+    "error_generic": "Something went wrong. Please try again.",
+    "error_network": "Network error. Please try again."
+  }
+}

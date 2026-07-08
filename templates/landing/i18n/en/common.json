@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "title": "Pantra — the AI assistant for dental practices",
+    "description": "Pantra is the AI WhatsApp assistant for your dental practice in Berlin. Book appointments, send reminders, cut no-shows. GDPR-compliant.",
+    "og_title": "Pantra — the AI assistant for dental practices",
+    "og_description": "Multilingual WhatsApp assistant for dental practices. GDPR-compliant."
+  },
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "cta_trial": "Start free 14-day trial",
+    "menu": "Open menu"
+  },
+  "trust": {
+    "dsgvo": "GDPR-compliant",
+    "avv": "DPA included",
+    "frankfurt": "Hosted in Frankfurt",
+    "sepa": "SEPA direct debit"
+  },
+  "footer": {
+    "brand_tag": "The AI WhatsApp assistant for dental practices in Berlin. Multilingual. GDPR-compliant. Hosted in Frankfurt.",
+    "col_product": "Product",
+    "col_legal": "Legal",
+    "col_contact": "Contact",
+    "product_features": "Features",
+    "product_pricing": "Pricing",
+    "product_demo": "Live demo",
+    "product_faq": "FAQ",
+    "legal_impressum": "Imprint",
+    "legal_datenschutz": "Privacy",
+    "legal_agb": "Terms",
+    "contact_demo": "Book a demo",
+    "copyright": "© 2026 Pantra · Made in Berlin",
+    "trust_line": "GDPR-compliant · DPA included · Hosted in Frankfurt"
+  }
+}

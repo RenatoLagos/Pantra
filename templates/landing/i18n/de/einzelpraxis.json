@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "Pantra — KI-Assistent für Ihre Zahnarztpraxis | 24/7 mehrsprachig"
+  },
+  "hero": {
+    "title": "Der KI-Assistent für Ihre Zahnarztpraxis. 24/7. Mehrsprachig.",
+    "lead": "Pantra antwortet auf WhatsApp, bucht Termine und reduziert No-Shows um 30%. In Deutsch, Englisch und 2 weiteren Sprachen Ihrer Wahl.",
+    "cta_trial": "14 Tage kostenlos testen",
+    "cta_demo": "Live-Demo buchen",
+    "mockup_aria": "WhatsApp-Chat-Vorschau"
+  },
+  "problem": {
+    "eyebrow": "Das Problem",
+    "heading": "Verlieren Sie Patient:innen am Wochenende?",
+    "intro": "Berliner Zahnarztpraxen verlieren mehr Termine als sie denken — und in mehr Sprachen, als sie bedienen können.",
+    "stat1_text": "der WhatsApp-Nachrichten an Zahnarztpraxen werden außerhalb der Sprechzeiten gesendet.",
+    "stat2_text": "der Berliner Bevölkerung hat einen Migrationshintergrund — Türkisch, Arabisch, Englisch, Spanisch.",
+    "stat3_text": "der Patient:innen kommen ohne aktive Erinnerung nicht zum Termin (Quelle: KZBV)."
+  },
+  "how": {
+    "eyebrow": "So funktioniert es",
+    "heading": "30 Minuten Setup. Ergebnisse ab Tag 1.",
+    "step1_title": "Setup in 30 Minuten",
+    "step1_desc": "WhatsApp Business verbinden, Kalender syncen, fertig. Keine technische Konfiguration, kein KI-Training.",
+    "step2_title": "Pantra antwortet ab Tag 1",
+    "step2_desc": "24/7, in Deutsch, Englisch und 2 Sprachen Ihrer Wahl. Natürliche Konversationen, keine Roboter-Sätze.",
+    "step3_title": "Sie sehen die Ergebnisse",
+    "step3_desc": "Wochenreport mit Buchungen, Anfragen und geretteten No-Shows. Entscheidungen mit Daten, nicht mit Bauchgefühl."
+  },
+  "features": {
+    "eyebrow": "Funktionen",
+    "heading": "Was Pantra für Ihre Praxis tut.",
+    "card1_title": "Mehrsprachig",
+    "card1_desc": "Sprechen Sie mit Patient:innen auf Deutsch, Englisch und 2 Sprachen Ihrer Wahl — Türkisch, Arabisch, Spanisch, Französisch, Russisch, Italienisch oder Portugiesisch. Weitere Sprache gewünscht? +€39/Monat.",
+    "card2_title": "Sprachnachrichten",
+    "card2_desc": "Patient sendet eine Sprachnachricht — Pantra versteht sie, transkribiert und antwortet (auf Wunsch auch per Sprachnachricht zurück). Ideal für ältere und migrantische Patient:innen.",
+    "card3_title": "Termin-Buchung",
+    "card3_desc": "Pantra bucht direkt in Google Calendar oder Ihrem PVS (Dampsoft, CHARLY, Z1). Bestätigung mit dem Patienten vor jedem Schritt.",
+    "card4_title": "No-Show Recovery",
+    "card4_desc": "Automatische Erinnerungen 48h, 24h und 2h vor dem Termin. Bei Absage bietet Pantra den Slot automatisch der Warteliste an."
+  },
+  "callout": {
+    "heading": "Gebaut für deutsche Zahnarztpraxen.",
+    "text": "DSGVO-konform. AVV inklusive. Server in Frankfurt. Pantra ist ab Tag 1 compliance-ready für die deutsche Healthcare-Realität."
+  },
+  "social": {
+    "eyebrow": "Erfahrungsberichte",
+    "heading": "Frühe Zugangsstellen — Pilotprogramm 2026.",
+    "placeholder_text": "Bis September 2026: Berliner Zahnarztpraxen testen Pantra im Pilotprogramm. Erste Erfahrungsberichte mit Video-Testimonials und konkreten Zahlen veröffentlichen wir in Kürze hier."
+  },
+  "pricing": {
+    "eyebrow": "Preise",
+    "heading": "Ein Plan. Alles drin.",
+    "intro": "Solo Plus ist für Einzelpraxen entwickelt — alle wichtigen Funktionen ohne komplizierte Tier-Vergleiche.",
+    "tagline": "Für Ihre Einzelpraxis",
+    "period": "/ Monat",
+    "setup": "+ €399 einmalige Einrichtung",
+    "feature_lang": "DE + EN + 2 Sprachen Ihrer Wahl",
+    "feature_audio": "Sprachnachrichten (Audio bidirektional)",
+    "feature_conversations": "Bis zu 2.000 Konversationen/Monat",
+    "feature_pvs": "Terminbuchung + PVS-Integration",
+    "feature_noshow": "No-Show Recovery automatisch",
+    "feature_escalation": "Telegram + Email Eskalation",
+    "feature_avv": "AVV inklusive (DSGVO)",
+    "feature_frankfurt": "Server in Frankfurt",
+    "feature_support": "Premium Support (24h Antwortzeit)",
+    "promo": "💡 Jährlich zahlen → 2 Monate gratis (10 zahlen, 12 erhalten)",
+    "cta_trial": "14 Tage kostenlos testen",
+    "cta_demo": "Live-Demo buchen",
+    "payment": "Bezahlung: SEPA-Lastschrift oder Kreditkarte"
+  },
+  "trust": {
+    "eyebrow": "Vertrauen",
+    "heading": "Compliance, die deutsche Zahnarztpraxen verlangen.",
+    "card1_desc": "Datenverarbeitung nach europäischem Recht.",
+    "card2_desc": "Auftragsverarbeitungsvertrag, unterschriftsbereit vor Ihrem ersten Vertrag.",
+    "card3_desc": "Hosted in Frankfurt. Daten bleiben in Deutschland.",
+    "card4_desc": "Wie jeder andere deutsche Anbieter.",
+    "link_avv_pdf": "AVV als PDF herunterladen",
+    "link_privacy": "Datenschutzerklärung"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Häufige Fragen.",
+    "q1": "Ist Pantra DSGVO-konform?",
+    "a1": "Ja. Pantra verarbeitet Daten nach europäischem Recht. Wir unterschreiben einen AVV mit jeder Praxis vor der ersten Verarbeitung. Server in Frankfurt.",
+    "q2": "Wo werden Patientendaten gespeichert?",
+    "a2": "In Servern in Frankfurt (AWS Frankfurt eu-central-1). PII wird automatisch in Logs redacted und max. 7 Tage aufbewahrt.",
+    "q3": "Welche Praxisverwaltungssysteme werden unterstützt?",
+    "a3": "Dampsoft, CHARLY, Z1 via Webhook. Andere Systeme integrieren wir über Google Calendar als Fallback. Wenn Ihr PVS nicht in der Liste ist — kontaktieren Sie uns.",
+    "q4": "Wie lange dauert die Einrichtung?",
+    "a4": "30 Minuten. Wir helfen Ihnen, WhatsApp Business und Ihren Kalender zu verbinden. Keine technischen Kenntnisse nötig.",
+    "q5": "Was passiert, wenn Pantra eine Frage nicht versteht?",
+    "a5": "Pantra eskaliert automatisch an Ihr Team via Telegram oder Email. Sie haben immer die letzte Kontrolle. Pantra trifft nie medizinische oder kommerzielle Entscheidungen.",
+    "q6": "Kann ich Pantra abbestellen?",
+    "a6": "Ja. Monatliche Kündigung ohne Bindung (außer Sie wählen den jährlichen Vorauszahlungsplan). Ihre Daten werden gemäß DSGVO exportiert und gelöscht.",
+    "q7": "Welche WhatsApp-Nummer wird verwendet?",
+    "a7": "Die Nummer Ihrer Praxis. Wir verbinden uns über die offizielle WhatsApp Business Cloud API von Meta. Die Nummer, die Ihre Patient:innen kennen, bleibt gleich."
+  },
+  "cta": {
+    "heading": "Loslegen.",
+    "lead": "14 Tage kostenlos. Keine Kreditkarte. Keine Installation.",
+    "meta": "Wir antworten innerhalb von 24 Stunden mit einem persönlichen Onboarding-Termin und einem AVV-Entwurf zur Prüfung.",
+    "consent_prefix": "Ich stimme der Verarbeitung meiner Daten gemäß",
+    "consent_link": "Datenschutzerklärung",
+    "consent_suffix": " zu.",
+    "submit": "14 Tage kostenlos starten"
+  },
+  "form": {
+    "placeholder_name": "Name *",
+    "placeholder_clinic": "Praxisname *",
+    "placeholder_email": "Business E-Mail *",
+    "placeholder_phone": "Telefon (optional)",
+    "success": "Danke! Wir melden uns innerhalb von 24 Stunden bei Ihnen.",
+    "error_generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    "error_network": "Netzwerkfehler. Bitte erneut versuchen."
+  }
+}

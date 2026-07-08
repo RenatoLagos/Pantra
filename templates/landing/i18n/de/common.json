@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "title": "Pantra — KI-Assistent für Zahnarztpraxen",
+    "description": "Pantra ist der KI-WhatsApp-Assistent für Ihre Zahnarztpraxis in Berlin. Termine buchen, Erinnerungen senden, No-Shows reduzieren. DSGVO-konform.",
+    "og_title": "Pantra — KI-Assistent für Zahnarztpraxen",
+    "og_description": "Mehrsprachiger WhatsApp-Assistent für Zahnarztpraxen. DSGVO-konform."
+  },
+  "nav": {
+    "features": "Funktionen",
+    "pricing": "Preise",
+    "faq": "FAQ",
+    "cta_trial": "14 Tage kostenlos testen",
+    "menu": "Menü öffnen"
+  },
+  "trust": {
+    "dsgvo": "DSGVO-konform",
+    "avv": "AVV inklusive",
+    "frankfurt": "Hosted in Frankfurt",
+    "sepa": "SEPA-Lastschrift"
+  },
+  "footer": {
+    "brand_tag": "Der KI-WhatsApp-Assistent für Zahnarztpraxen in Berlin. Mehrsprachig. DSGVO-konform. Hosted in Frankfurt.",
+    "col_product": "Produkt",
+    "col_legal": "Recht",
+    "col_contact": "Kontakt",
+    "product_features": "Funktionen",
+    "product_pricing": "Preise",
+    "product_demo": "Live-Demo",
+    "product_faq": "FAQ",
+    "legal_impressum": "Impressum",
+    "legal_datenschutz": "Datenschutz",
+    "legal_agb": "AGB",
+    "contact_demo": "Demo vereinbaren",
+    "copyright": "© 2026 Pantra · Made in Berlin",
+    "trust_line": "DSGVO-konform · AVV inklusive · Hosted in Frankfurt"
+  }
+}

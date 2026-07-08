@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "Pricing — Pantra for Dental Practices | Solo, Solo Plus, Multi",
+    "description": "Pantra pricing: Solo €149/month, Solo Plus €349/month (Recommended), Multi for group practices. Multilingual, GDPR-compliant, DPA included."
+  },
+  "header": {
+    "eyebrow": "Pricing",
+    "title": "Simple pricing. No surprises.",
+    "subtitle": "Choose the plan that fits your practice. Upgrade or downgrade anytime. Cancel monthly, no commitment."
+  },
+  "tier_solo": {
+    "tagline": "For traditional solo practices",
+    "period": "/ month",
+    "setup": "+ €199 one-time setup",
+    "feature_lang": "German + English",
+    "feature_conversations": "600 conversations/month",
+    "feature_text_only": "Text only (no audio)",
+    "feature_reminders": "Reminders 24h in advance",
+    "feature_email_escalation": "Email escalation",
+    "feature_avv": "DPA included (GDPR)",
+    "feature_frankfurt": "Servers in Frankfurt",
+    "feature_support": "48h support"
+  },
+  "tier_solo_plus": {
+    "badge": "Recommended",
+    "tagline": "For modern solo practices",
+    "period": "/ month",
+    "setup": "+ €399 one-time setup",
+    "feature_lang_choice": "2 languages of your choice",
+    "feature_conversations": "2,000 conversations/month",
+    "feature_audio": "Two-way audio (STT + TTS)",
+    "feature_reminders": "Multi-touch reminders (48h / 24h / 2h)",
+    "feature_noshow": "Automatic no-show recovery",
+    "feature_pvs": "PMS integration (Dampsoft, CHARLY, Z1)",
+    "feature_escalation": "Telegram + email escalation",
+    "feature_avv_frankfurt": "DPA included + servers in Frankfurt",
+    "feature_support": "Premium 24h support"
+  },
+  "tier_multi": {
+    "badge": "Coming soon",
+    "tagline": "For group practices (2-4 dentists)",
+    "price_from": "from €499",
+    "period": "/ month",
+    "setup": "Custom onboarding",
+    "feature_everything": "Everything in Solo Plus, plus:",
+    "feature_dentists": "Up to 4 dentists / calendars",
+    "feature_triage": "Smart multi-doctor triage",
+    "feature_services": "Multiple services per dentist",
+    "feature_dashboards": "Advanced analytics dashboards",
+    "feature_account_manager": "Dedicated account manager",
+    "cta": "Request early access"
+  },
+  "addons": {
+    "eyebrow": "Add-ons",
+    "heading": "Extras you add whenever you need them.",
+    "lang_title": "Additional language",
+    "lang_price": "+€39 / month",
+    "lang_desc": "Per additional language (3rd, 4th, ...). Solo Plus already includes 2 languages of your choice. Available: TR, AR, ES, FR, RU, IT, PT.",
+    "onboarding_title": "On-site onboarding",
+    "onboarding_price": "+€199 one-time",
+    "onboarding_desc": "A personal visit from our founder at your practice. Full setup plus team training in 90 minutes.",
+    "overage_title": "Overage",
+    "overage_price": "€0.15 / conv.",
+    "overage_desc": "If you exceed your plan's monthly limit, extra conversations are billed on a pay-as-you-go basis.",
+    "annual_title": "Annual payment",
+    "annual_price": "2 months free",
+    "annual_desc": "Pay 12 months upfront and get 2 months free. Available on request."
+  },
+  "limits": {
+    "heading": "What counts as a \"conversation\"?",
+    "p1": "A conversation is a chat thread between a patient and Pantra. Whether it has 3 messages or 50, it counts as ONE conversation.",
+    "p2": "If the patient writes again after 30 minutes of inactivity, a new conversation begins.",
+    "solo_label": "Solo — limit",
+    "solo_value": "600 / month",
+    "solo_plus_label": "Solo Plus — limit",
+    "solo_plus_value": "2,000 / month",
+    "overage_label": "Overage per conversation",
+    "overage_value": "€0.15",
+    "avg_label": "Average solo practice",
+    "avg_value": "~150–500 / month"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Pricing questions.",
+    "q1": "What happens if I exceed the monthly limit?",
+    "a1": "Pantra notifies you immediately via Telegram and email. You have two options: (1) upgrade your plan, or (2) switch to pay-as-you-go billing (€0.15 per additional conversation). We never block the service without warning you first.",
+    "q2": "Can I change plans later?",
+    "a2": "Yes. Upgrading from Solo to Solo Plus takes effect immediately, billed pro-rata. Downgrades apply from the next billing cycle. No penalties, no questions asked.",
+    "q3": "Is there a minimum contract term?",
+    "a3": "No. Monthly cancellation with 30 days' notice. If you choose annual prepayment (2 months free), that comes with a 12-month term.",
+    "q4": "What payment methods do you accept?",
+    "a4": "SEPA direct debit (standard for German practices) or credit card (VISA, Mastercard). Monthly or annual invoicing, your choice.",
+    "q5": "How much does an extra language channel cost?",
+    "a5": "+€39/month per extra language. Solo Plus already includes 2 languages of your choice. A third language channel (e.g. Arabic after Turkish and Spanish) would be +€39/month. Volume discounts are available from 4 languages — just ask.",
+    "q6": "Can prices change later?",
+    "a6": "Our contract reserves the right to adjust prices by up to 8% per year, with 60 days' notice (standard for German B2B SaaS). Prepaying annually locks in your current price for 12 months.",
+    "q7": "Do you offer discounts for multiple practices or chains?",
+    "a7": "Yes. For 3+ practices under the same ownership, we offer custom enterprise pricing — please contact us for a quote.",
+    "q8": "Is there a free trial?",
+    "a8": "Yes — 14 days free, no credit card, no installation. You try Pantra in the full Solo Plus configuration. After 14 days you'll automatically move to your chosen plan, or simply cancel — no strings attached."
+  },
+  "trust": {
+    "heading": "Included in every plan.",
+    "dsgvo_desc": "Data processing under European law.",
+    "avv_title": "DPA incl.",
+    "avv_desc": "Data processing agreement ready to sign before your first contract.",
+    "frankfurt_title": "Servers in Germany",
+    "frankfurt_desc": "Hosted in Frankfurt. Your data stays in Germany.",
+    "sepa_desc": "Just like any other German provider."
+  },
+  "cta": {
+    "heading": "Ready to lighten your team's workload?",
+    "cta_learn_more": "Learn more about Pantra"
+  }
+}
