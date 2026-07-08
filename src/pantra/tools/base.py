@@ -30,6 +30,7 @@ class ToolContext:
     business_id: uuid.UUID
     customer_id: uuid.UUID
     conversation_id: uuid.UUID
+    is_demo: bool
     session: AsyncSession
     idempotency_key: str  # e.g. f"whatsapp:{message_id}:{tool_name}"
 

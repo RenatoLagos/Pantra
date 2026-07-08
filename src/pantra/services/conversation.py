@@ -513,6 +513,7 @@ async def _execute_tools(
                 business_id=business.id,
                 customer_id=customer.id,
                 conversation_id=conversation.id,
+                is_demo=business.is_demo,
                 session=session,
                 idempotency_key=f"{inbound.channel}:{inbound.external_message_id}:{call.get('id')}",
             )

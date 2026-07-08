@@ -205,6 +205,7 @@ class CreateBookingTool(Tool[CreateBookingIn, CreateBookingOut]):
             business_id=ctx.business_id,
             customer_id=ctx.customer_id,
             conversation_id=ctx.conversation_id,
+            is_demo=ctx.is_demo,
             practitioner_id=payload.practitioner_id,
             service_id=payload.service_id,
             date=payload.date,
