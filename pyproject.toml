@@ -26,7 +26,7 @@ dependencies = [
     "celery[redis]>=5.4",
     "structlog>=24.1",
     "anthropic>=0.39",
-    "openai>=1.50",                   # Whisper STT
+    "openai>=2.44.0",                 # Whisper STT + signed Realtime SIP webhooks
     "google-generativeai>=0.7",       # optional fallback for classifier
     "tenacity>=9.0",                  # retries on tool calls
     "python-multipart>=0.0.9",
@@ -57,6 +57,10 @@ src = ["src"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency-injection callables are safe as argument defaults.
+extend-immutable-calls = ["fastapi.Depends"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

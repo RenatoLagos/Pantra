@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -42,6 +42,23 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
     openai_api_key: str = ""
+
+    # ─── Realtime voice ──
+    # Webhook ingestion and call acceptance are separate switches. The pilot's
+    # deduplication is process-local, so enabling ingestion requires an explicit
+    # single-worker acknowledgement until a shared store is implemented.
+    voice_webhook_enabled: bool = False
+    voice_webhook_single_worker: bool = False
+    voice_webhook_max_body_bytes: int = 64 * 1024
+    voice_enabled: bool = False
+    openai_webhook_secret: str = ""
+    voice_realtime_model: str = "gpt-realtime"
+    voice_realtime_voice: str = "marin"
+    voice_api_timeout_seconds: float = 5.0
+    voice_realtime_instructions: str = (
+        "You are Pantra, a friendly dental clinic receptionist. "
+        "Speak naturally and help with general administrative questions."
+    )
 
     llm_classifier_provider: Literal["anthropic", "gemini", "openai"] = "anthropic"
     llm_classifier_model: str = "claude-haiku-4-5-20251001"
@@ -108,9 +125,32 @@ class Settings(BaseSettings):
     google_calendar_scopes: str = "https://www.googleapis.com/auth/calendar"
 
 
+    @model_validator(mode="after")
+    def _validate_voice_configuration(self) -> Settings:
+        """Reject unsafe or internally inconsistent realtime voice settings."""
+        problems: list[str] = []
+        if self.voice_enabled and not self.voice_webhook_enabled:
+            problems.append("VOICE_WEBHOOK_ENABLED is required when realtime voice is enabled")
+        if self.voice_webhook_enabled and not self.openai_api_key:
+            problems.append("OPENAI_API_KEY is required when the voice webhook is enabled")
+        if self.voice_webhook_enabled and not self.openai_webhook_secret:
+            problems.append("OPENAI_WEBHOOK_SECRET is required when the voice webhook is enabled")
+        if self.voice_webhook_enabled and not self.voice_webhook_single_worker:
+            problems.append(
+                "VOICE_WEBHOOK_SINGLE_WORKER=true is required for in-memory webhook idempotency"
+            )
+        if self.voice_webhook_max_body_bytes <= 0:
+            problems.append("VOICE_WEBHOOK_MAX_BODY_BYTES must be greater than zero")
+        if self.voice_api_timeout_seconds <= 0:
+            problems.append("VOICE_API_TIMEOUT_SECONDS must be greater than zero")
+        if problems:
+            raise ValueError("Invalid voice configuration:\n  - " + "\n  - ".join(problems))
+        return self
+
+
 @lru_cache
 def _load_settings() -> Settings:
-    return Settings()  # type: ignore[call-arg]
+    return Settings()
 
 
 settings: Settings = _load_settings()

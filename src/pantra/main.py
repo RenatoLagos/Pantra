@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -12,6 +13,12 @@ from pantra.api.demo.router import router as demo_router
 from pantra.api.landing.router import router as landing_router
 from pantra.api.leads.router import router as leads_router
 from pantra.api.legal.router import router as legal_router
+from pantra.api.webhooks.openai_realtime import (
+    create_voice_gateway,
+)
+from pantra.api.webhooks.openai_realtime import (
+    router as openai_realtime_router,
+)
 from pantra.api.webhooks.whatsapp import router as whatsapp_router
 from pantra.config import settings
 from pantra.logging import configure_logging, log
@@ -20,12 +27,20 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # noqa: ARG001
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
     Path(settings.audio_storage_path).mkdir(parents=True, exist_ok=True)
+    voice_gateway = None
+    if settings.voice_webhook_enabled:
+        voice_gateway = create_voice_gateway()
+        app.state.voice_gateway = voice_gateway
     log.info("pantra.startup", env=settings.environment)
-    yield
-    log.info("pantra.shutdown")
+    try:
+        yield
+    finally:
+        if voice_gateway is not None:
+            await voice_gateway.close()
+        log.info("pantra.shutdown")
 
 
 app = FastAPI(
@@ -64,6 +79,7 @@ app.mount(
 )
 
 app.include_router(whatsapp_router, prefix="/webhooks", tags=["webhooks"])
+app.include_router(openai_realtime_router, prefix="/webhooks", tags=["webhooks"])
 app.include_router(demo_router, tags=["demo"])
 app.include_router(landing_router, tags=["landing"])
 app.include_router(leads_router, tags=["leads"])
