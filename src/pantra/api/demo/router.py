@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import shutil
 import uuid
 from pathlib import Path
 
+import aiofiles  # type: ignore[import-untyped]
 from fastapi import APIRouter, Cookie, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, Field
 from sqlalchemy import select, update
 
 from pantra.channels.web.normalizer import WebInbound, to_inbound_message
@@ -14,6 +15,7 @@ from pantra.config import settings
 from pantra.db import session_scope
 from pantra.logging import log
 from pantra.models import Business, ChannelType, Conversation, ConversationStatus, Customer
+from pantra.ratelimit import allow
 from pantra.services.conversation import OutboundMessage, process_inbound
 
 router = APIRouter()
@@ -26,6 +28,31 @@ VERTICALS = {
 }
 
 SESSION_COOKIE = "pantra_demo_session"
+
+# Audio content types we accept on the public demo upload, mapped to the
+# extension Whisper needs to detect the format. The stored filename's suffix is
+# derived from THIS map — never from the client-supplied filename — so an
+# attacker cannot land an executable/HTML extension in storage.
+_ALLOWED_AUDIO: dict[str, str] = {
+    "audio/webm": ".webm",
+    "audio/ogg": ".ogg",
+    "audio/mpeg": ".mp3",
+    "audio/mp4": ".mp4",
+    "audio/m4a": ".m4a",
+    "audio/x-m4a": ".m4a",
+    "audio/wav": ".wav",
+    "audio/x-wav": ".wav",
+}
+
+_UPLOAD_CHUNK = 1024 * 1024  # 1 MB
+
+
+class DemoMessageIn(BaseModel):
+    """Validated body for the public demo chat endpoint. The length cap bounds
+    per-message LLM cost on an unauthenticated surface."""
+
+    text: str = Field(max_length=2000)
+    session_id: str | None = Field(default=None, max_length=128)
 
 
 @router.get("/demo")
@@ -69,14 +96,16 @@ async def chat_page(vertical: str, request: Request, response: Response):
 @router.post("/demo/{vertical}/messages")
 async def post_message(
     vertical: str,
-    payload: dict,
+    payload: DemoMessageIn,
     pantra_demo_session: str | None = Cookie(default=None, alias=SESSION_COOKIE),
 ) -> JSONResponse:
     info = _vertical_or_404(vertical)
-    session_id = pantra_demo_session or payload.get("session_id") or uuid.uuid4().hex
-    text = (payload.get("text") or "").strip()
+    session_id = pantra_demo_session or payload.session_id or uuid.uuid4().hex
+    text = payload.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="text required")
+
+    await _enforce_demo_session_limit(session_id)
 
     outcome = await _run_pipeline(
         WebInbound(
@@ -141,17 +170,35 @@ async def reset_session(
 async def post_audio(
     vertical: str,
     audio: UploadFile = File(...),
-    session_id: str = Form(...),
+    session_id: str = Form(..., max_length=128),
 ) -> JSONResponse:
     info = _vertical_or_404(vertical)
+    await _enforce_demo_session_limit(session_id)
 
-    # Persist the inbound audio to disk so the transcriber can read it.
-    inbound_dir = Path(settings.audio_storage_path) / "inbound"
+    # Accept audio only, and derive the stored extension from the validated
+    # content type — never from the client filename (which is attacker-controlled
+    # and would otherwise let arbitrary extensions land in storage).
+    suffix = _ALLOWED_AUDIO.get((audio.content_type or "").split(";")[0].strip())
+    if suffix is None:
+        raise HTTPException(status_code=415, detail="unsupported audio type")
+
+    # Store inbound recordings OUTSIDE the /static/audio mount so raw patient
+    # voice is never reachable over HTTP.
+    inbound_dir = Path(settings.audio_inbound_path)
     inbound_dir.mkdir(parents=True, exist_ok=True)
-    suffix = Path(audio.filename or "audio.webm").suffix or ".webm"
     audio_path = inbound_dir / f"{uuid.uuid4().hex}{suffix}"
-    with audio_path.open("wb") as out:
-        shutil.copyfileobj(audio.file, out)
+
+    written = 0
+    try:
+        async with aiofiles.open(audio_path, "wb") as out:
+            while chunk := await audio.read(_UPLOAD_CHUNK):
+                written += len(chunk)
+                if written > settings.demo_audio_max_bytes:
+                    raise HTTPException(status_code=413, detail="audio too large")
+                await out.write(chunk)
+    except HTTPException:
+        audio_path.unlink(missing_ok=True)  # drop the partial write
+        raise
 
     outcome = await _run_pipeline(
         WebInbound(
@@ -171,6 +218,14 @@ def _vertical_or_404(vertical: str) -> dict:
     if vertical not in VERTICALS:
         raise HTTPException(status_code=404, detail="unknown vertical")
     return VERTICALS[vertical]
+
+
+async def _enforce_demo_session_limit(session_id: str) -> None:
+    """Apply the attacker-rotatable session bucket after request parsing."""
+    if not await allow(
+        f"demo:session:{session_id}:day", limit=settings.demo_daily_cap, window_seconds=86400
+    ):
+        raise HTTPException(status_code=429, detail="daily_limit_reached")
 
 
 async def _run_pipeline(web: WebInbound) -> OutboundMessage:

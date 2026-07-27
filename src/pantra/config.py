@@ -97,7 +97,17 @@ class Settings(BaseSettings):
     elevenlabs_api_base: str = "https://api.elevenlabs.io/v1"
 
     audio_storage_path: str = "./storage/audio"
+    # Inbound recordings (raw patient voice — sensitive PII) are stored OUTSIDE
+    # audio_storage_path so they are never reachable via the /static/audio mount.
+    # Kept as a sibling directory; the audio retention worker sweeps both.
+    audio_inbound_path: str = "./storage/audio_inbound"
     audio_retention_hours: int = 24
+    # Hard cap on an inbound demo audio upload. Guards the public, unauthenticated
+    # demo endpoint against disk-fill / memory-pressure abuse.
+    demo_audio_max_bytes: int = 15 * 1024 * 1024  # 15 MB
+    # Bounded allowance for multipart boundaries and form-field headers. The ASGI
+    # guard caps the whole request at file limit + this overhead.
+    demo_audio_multipart_overhead_bytes: int = 64 * 1024
     # Public base URL for audio served from filesystem. Required for
     # WhatsApp send_audio (Meta needs an HTTPS URL it can fetch).
     # Example dev: https://<ngrok>.ngrok.app/static/audio
@@ -113,6 +123,17 @@ class Settings(BaseSettings):
     demo_handoff_telegram_chat_id: str = ""
     # Demo session lifetime (browser cookie + DB conversation purge).
     demo_session_days: int = 7
+    # Abuse limits for the public, unauthenticated demo endpoints. Demos bypass
+    # per-business quota (their cost is marketing), so these ceilings are the
+    # only thing standing between an anonymous script and the LLM cost budget.
+    # 32 KiB permits the schema's maximum text/session payload even when a JSON
+    # client emits worst-case escaped Unicode, while still bounding pre-parse work.
+    demo_message_max_body_bytes: int = 32 * 1024
+    demo_rate_per_minute: int = 10  # per client IP, fixed window
+    demo_daily_cap: int = 60  # per client IP and demo session, rolling 24h
+    # Public demo rate limiting fails open, so Redis connection/read failures
+    # must resolve quickly rather than tying up unauthenticated requests.
+    demo_ratelimit_redis_timeout_seconds: float = 0.5
 
     # ─── Privacy ──
     pii_redaction_enabled: bool = True

@@ -1,19 +1,26 @@
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import date, time
 from importlib import import_module
+from io import BytesIO
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from pydantic import ValidationError
+from starlette.datastructures import Headers
 
 import pantra.api.webhooks.whatsapp as whatsapp_router
 import pantra.handoff.email as handoff_email
+import pantra.workers.audio_retention as audio_retention
+from pantra.api.demo.router import DemoMessageIn
 from pantra.config import Settings, settings
 from pantra.llm.prompts.system import _sanitize_untrusted
+from pantra.services.conversation import OutboundMessage
 from pantra.tools.base import ToolContext, ToolError
 from pantra.tools.booking import (
     CancelBookingIn,
@@ -23,6 +30,7 @@ from pantra.tools.booking import (
 )
 
 admin_router = import_module("pantra.api.admin.router")
+demo_router = import_module("pantra.api.demo.router")
 
 
 def test_production_rejects_missing_security_secrets() -> None:
@@ -276,3 +284,129 @@ async def test_booking_mutations_reject_another_customer(tool, payload):
 
     assert exc_info.value.code == "not_found"
     assert session.flushed is False
+
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"text": "x" * 2001},
+        {"text": "hello", "session_id": "x" * 129},
+    ],
+)
+def test_demo_message_validation_caps_untrusted_input(payload):
+    with pytest.raises(ValidationError):
+        DemoMessageIn.model_validate(payload)
+
+
+async def test_demo_session_limit_enforces_daily_boundary(monkeypatch):
+    calls: list[tuple[str, int, int]] = []
+
+    async def fake_allow(key: str, *, limit: int, window_seconds: int) -> bool:
+        calls.append((key, limit, window_seconds))
+        return False
+
+    monkeypatch.setattr(demo_router, "allow", fake_allow)
+    monkeypatch.setattr(settings, "demo_daily_cap", 60)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await demo_router._enforce_demo_session_limit("session-1")
+
+    assert exc_info.value.status_code == 429
+    assert exc_info.value.detail == "daily_limit_reached"
+    assert calls == [
+        ("demo:session:session-1:day", 60, 86400),
+    ]
+
+
+async def test_demo_audio_uses_server_selected_private_suffix(tmp_path, monkeypatch):
+    captured: list[Any] = []
+
+    async def fake_limits(_session_id):
+        return None
+
+    async def fake_pipeline(web):
+        captured.append(web)
+        return OutboundMessage(text="ok")
+
+    inbound_dir = tmp_path / "private-inbound"
+    monkeypatch.setattr(demo_router, "_enforce_demo_session_limit", fake_limits)
+    monkeypatch.setattr(demo_router, "_run_pipeline", fake_pipeline)
+    monkeypatch.setattr(settings, "audio_inbound_path", str(inbound_dir))
+    monkeypatch.setattr(settings, "demo_audio_max_bytes", 1024)
+    upload = UploadFile(
+        file=BytesIO(b"audio"),
+        filename="../../payload.html",
+        headers=Headers({"content-type": "audio/webm"}),
+    )
+
+    await demo_router.post_audio("dental", upload, "session-1")
+
+    stored = Path(captured[0].audio_path)
+    assert stored.parent == inbound_dir
+    assert stored.suffix == ".webm"
+    assert stored.read_bytes() == b"audio"
+
+
+async def test_demo_audio_removes_partial_oversize_upload(tmp_path, monkeypatch):
+    async def fake_limits(_session_id):
+        return None
+
+    monkeypatch.setattr(demo_router, "_enforce_demo_session_limit", fake_limits)
+    inbound_dir = tmp_path / "private-inbound"
+    monkeypatch.setattr(settings, "audio_inbound_path", str(inbound_dir))
+    monkeypatch.setattr(settings, "demo_audio_max_bytes", 4)
+    upload = UploadFile(
+        file=BytesIO(b"too-large"),
+        filename="voice.webm",
+        headers=Headers({"content-type": "audio/webm"}),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await demo_router.post_audio("dental", upload, "session-1")
+
+    assert exc_info.value.status_code == 413
+    assert list(inbound_dir.iterdir()) == []
+
+
+async def test_demo_audio_rejects_unsupported_content_type(tmp_path, monkeypatch):
+    async def fake_limits(_session_id):
+        return None
+
+    monkeypatch.setattr(demo_router, "_enforce_demo_session_limit", fake_limits)
+    inbound_dir = tmp_path / "private-inbound"
+    monkeypatch.setattr(settings, "audio_inbound_path", str(inbound_dir))
+    upload = UploadFile(
+        file=BytesIO(b"<script>"),
+        filename="payload.html",
+        headers=Headers({"content-type": "text/html"}),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await demo_router.post_audio("dental", upload, "session-1")
+
+    assert exc_info.value.status_code == 415
+    assert not inbound_dir.exists()
+
+
+def test_demo_audio_retention_sweeps_public_and_private_roots(tmp_path, monkeypatch):
+    public_dir = tmp_path / "public"
+    private_dir = tmp_path / "private"
+    public_dir.mkdir()
+    private_dir.mkdir()
+    old_public = public_dir / "old.mp3"
+    old_private = private_dir / "old.webm"
+    recent_private = private_dir / "recent.webm"
+    for path in (old_public, old_private, recent_private):
+        path.write_bytes(b"audio")
+    os.utime(old_public, (0, 0))
+    os.utime(old_private, (0, 0))
+
+    monkeypatch.setattr(settings, "audio_storage_path", str(public_dir))
+    monkeypatch.setattr(settings, "audio_inbound_path", str(private_dir))
+    monkeypatch.setattr(settings, "audio_retention_hours", 24)
+
+    assert audio_retention.purge_old_audio() == 2
+    assert not old_public.exists()
+    assert not old_private.exists()
+    assert recent_private.exists()

@@ -9,6 +9,7 @@ from fastapi.responses import ORJSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from pantra.api.admin.router import router as admin_router
+from pantra.api.demo.body_limit import DemoRequestGuardMiddleware
 from pantra.api.demo.router import router as demo_router
 from pantra.api.landing.router import router as landing_router
 from pantra.api.leads.router import router as leads_router
@@ -48,6 +49,14 @@ app = FastAPI(
     version="0.1.0",
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
+)
+app.add_middleware(
+    DemoRequestGuardMiddleware,
+    message_max_body_bytes=settings.demo_message_max_body_bytes,
+    audio_max_file_bytes=settings.demo_audio_max_bytes,
+    multipart_overhead_bytes=settings.demo_audio_multipart_overhead_bytes,
+    rate_per_minute=settings.demo_rate_per_minute,
+    daily_cap=settings.demo_daily_cap,
 )
 
 
