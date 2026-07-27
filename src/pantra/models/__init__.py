@@ -4,7 +4,7 @@ Importing this package registers every table on `Base.metadata`, which is
 what Alembic autogenerate scans.
 """
 from pantra.models.ai_run import AIRun
-from pantra.models.base import Base, TimestampMixin, UUIDPK
+from pantra.models.base import UUIDPK, Base, TimestampMixin
 from pantra.models.booking import Booking, BookingStatus
 from pantra.models.business import Business, BusinessDomain
 from pantra.models.channel import Channel, ChannelStatus, ChannelType
@@ -15,10 +15,12 @@ from pantra.models.idempotency import ToolIdempotency
 from pantra.models.knowledge import KnowledgeCategory, KnowledgeEntry
 from pantra.models.lead import Lead, LeadStatus
 from pantra.models.practitioner import Practitioner
+from pantra.models.reminder import SentReminder
 from pantra.models.schedule import PractitionerSchedule
 from pantra.models.service import Service
 
 __all__ = [
+    "UUIDPK",
     "AIRun",
     "Base",
     "Booking",
@@ -41,8 +43,8 @@ __all__ = [
     "MessageSender",
     "Practitioner",
     "PractitionerSchedule",
+    "SentReminder",
     "Service",
     "TimestampMixin",
     "ToolIdempotency",
-    "UUIDPK",
 ]

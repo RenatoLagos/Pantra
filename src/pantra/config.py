@@ -83,6 +83,13 @@ class Settings(BaseSettings):
     # ─── Memory ──
     memory_window_messages: int = 20
 
+    # ─── Reminders ──
+    # A booking is reminded when its appointment instant (computed in the
+    # business timezone) falls within ± this many seconds of the target lead
+    # time. Must exceed half the beat interval (60s) so no booking is missed;
+    # idempotency (sent_reminders) makes a generous window safe.
+    reminder_window_seconds: int = 90
+
     # ─── Handoff ──
     # Telegram bot for the business owner. MVP keeps a single bot + chat_id
     # in env; Phase 2 will move chat_id to business.config (multi-tenant).
