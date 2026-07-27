@@ -7,6 +7,12 @@ from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _is_change_me_placeholder(value: str) -> bool:
+    """Detect the placeholder family used by checked-in environment examples."""
+    normalized = value.strip().lower()
+    return not normalized or normalized.startswith("change-me")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -126,8 +132,10 @@ class Settings(BaseSettings):
 
 
     @model_validator(mode="after")
-    def _validate_voice_configuration(self) -> Settings:
-        """Reject unsafe or internally inconsistent realtime voice settings."""
+    def _require_production_secrets(self) -> Settings:
+        """Fail fast (refuse to boot) when production is missing a security-critical
+        secret. Prevents insecure-by-default deploys — e.g. an empty app secret that
+        would silently disable webhook signature verification."""
         problems: list[str] = []
         if self.voice_enabled and not self.voice_webhook_enabled:
             problems.append("VOICE_WEBHOOK_ENABLED is required when realtime voice is enabled")
@@ -143,8 +151,27 @@ class Settings(BaseSettings):
             problems.append("VOICE_WEBHOOK_MAX_BODY_BYTES must be greater than zero")
         if self.voice_api_timeout_seconds <= 0:
             problems.append("VOICE_API_TIMEOUT_SECONDS must be greater than zero")
+
+        if self.environment != "production":
+            if problems:
+                raise ValueError("Invalid voice configuration:\n  - " + "\n  - ".join(problems))
+            return self
+
+        if _is_change_me_placeholder(self.whatsapp_app_secret):
+            problems.append(
+                "WHATSAPP_APP_SECRET must be changed from its placeholder in production "
+                "(webhook HMAC verification)"
+            )
+        if _is_change_me_placeholder(self.whatsapp_verify_token):
+            problems.append("WHATSAPP_VERIFY_TOKEN must be changed from its placeholder")
+        if self.llm_main_provider == "anthropic" and not self.anthropic_api_key.strip():
+            problems.append("ANTHROPIC_API_KEY is required when the main LLM provider is anthropic")
+        if self.llm_classifier_provider == "anthropic" and not self.anthropic_api_key.strip():
+            problems.append(
+                "ANTHROPIC_API_KEY is required when the classifier provider is anthropic"
+            )
         if problems:
-            raise ValueError("Invalid voice configuration:\n  - " + "\n  - ".join(problems))
+            raise ValueError("Insecure production configuration:\n  - " + "\n  - ".join(problems))
         return self
 
 

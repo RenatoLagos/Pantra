@@ -14,6 +14,11 @@ from pantra.services.conversation import handle_inbound_message
 router = APIRouter()
 
 
+def _constant_time_equal(left: str, right: str) -> bool:
+    """Compare arbitrary Unicode text without compare_digest's str restriction."""
+    return hmac.compare_digest(left.encode("utf-8"), right.encode("utf-8"))
+
+
 @router.get("/whatsapp", response_class=PlainTextResponse)
 async def verify(
     mode: str = Query(..., alias="hub.mode"),
@@ -22,7 +27,8 @@ async def verify(
 ) -> str:
     # Meta hands us this triple during webhook setup. Echo the challenge
     # only when our pre-shared verify token matches.
-    if mode != "subscribe" or token != settings.whatsapp_verify_token:
+    token_ok = _constant_time_equal(token, settings.whatsapp_verify_token)
+    if mode != "subscribe" or not token_ok:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     return challenge
 
@@ -51,7 +57,15 @@ async def receive(
 
 def _verify_signature(body: bytes, header: str | None) -> None:
     if not settings.whatsapp_app_secret:
-        # No secret configured (dev). Skip verification but log loudly.
+        if settings.environment == "production":
+            # Never accept unauthenticated webhooks in prod. Config validation
+            # should catch this at boot; this is the belt-and-suspenders guard.
+            log.error("whatsapp.signature_no_secret_prod")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="webhook not configured",
+            )
+        # No secret configured (dev only). Skip verification but log loudly.
         log.warning("whatsapp.signature_skipped_no_secret")
         return
     if not header or not header.startswith("sha256="):
@@ -63,5 +77,5 @@ def _verify_signature(body: bytes, header: str | None) -> None:
         hashlib.sha256,
     ).hexdigest()
     received = header.removeprefix("sha256=")
-    if not hmac.compare_digest(expected, received):
+    if not _constant_time_equal(expected, received):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="bad signature")

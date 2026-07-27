@@ -246,7 +246,14 @@ class RescheduleBookingTool(Tool[RescheduleBookingIn, RescheduleBookingOut]):
         self, ctx: ToolContext, payload: RescheduleBookingIn
     ) -> RescheduleBookingOut:
         booking = await ctx.session.get(Booking, payload.booking_id, with_for_update=True)
-        if not booking or booking.business_id != ctx.business_id:
+        if (
+            not booking
+            or booking.business_id != ctx.business_id
+            or booking.customer_id != ctx.customer_id
+        ):
+            # Scope to the requesting patient: knowing a booking_id must not let
+            # one patient reschedule another's appointment. "not_found" avoids
+            # leaking whether the id exists.
             raise ToolError("not_found", "Booking not found.")
         if booking.status in (BookingStatus.cancelled, BookingStatus.no_show):
             raise ToolError(
@@ -303,7 +310,13 @@ class CancelBookingTool(Tool[CancelBookingIn, CancelBookingOut]):
 
     async def _execute(self, ctx: ToolContext, payload: CancelBookingIn) -> CancelBookingOut:
         booking = await ctx.session.get(Booking, payload.booking_id, with_for_update=True)
-        if not booking or booking.business_id != ctx.business_id:
+        if (
+            not booking
+            or booking.business_id != ctx.business_id
+            or booking.customer_id != ctx.customer_id
+        ):
+            # Scope to the requesting patient — one patient must not be able to
+            # cancel another's appointment by guessing/reusing a booking_id.
             raise ToolError("not_found", "Booking not found.")
         booking.status = BookingStatus.cancelled
         if payload.reason:

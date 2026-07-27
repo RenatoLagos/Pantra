@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import uuid
 
 import httpx
@@ -81,13 +82,18 @@ async def _send_handoff_via_resend(
     business_id: uuid.UUID,
     conversation_id: uuid.UUID,
 ) -> None:
+    # reason/summary are LLM-authored from patient-supplied content — escape
+    # before interpolating into HTML so a crafted message can't inject markup
+    # into the owner's inbox. Mirrors handoff/telegram.py.
+    reason = html.escape(task.reason)
+    summary = html.escape(task.summary)
     body_html = (
         f"<h2>Handoff requested</h2>"
-        f"<p><strong>Reason:</strong> {task.reason}<br>"
+        f"<p><strong>Reason:</strong> {reason}<br>"
         f"<strong>Priority:</strong> {task.priority}<br>"
         f"<strong>Business:</strong> {business_id}<br>"
         f"<strong>Conversation:</strong> {conversation_id}</p>"
-        f"<h3>Summary</h3><pre>{task.summary}</pre>"
+        f"<h3>Summary</h3><pre>{summary}</pre>"
         f"<p><small>handoff_id: {task.id}</small></p>"
     )
     sent = await send_resend_raw(

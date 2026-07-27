@@ -8,6 +8,7 @@ auth layer in front of /admin/* if you ever route public traffic here.
 """
 from __future__ import annotations
 
+import hmac
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,12 +31,18 @@ TEMPLATES_DIR = Path(__file__).resolve().parents[3].parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
+def _constant_time_equal(left: str, right: str) -> bool:
+    """Compare arbitrary Unicode text without compare_digest's str restriction."""
+    return hmac.compare_digest(left.encode("utf-8"), right.encode("utf-8"))
+
+
 def _require_admin(authorization: str | None = Header(default=None)) -> None:
     """Bearer-token guard. Empty token (default) blocks all access."""
     if not settings.admin_token:
         raise HTTPException(status_code=403, detail="admin endpoints disabled")
     expected = f"Bearer {settings.admin_token}"
-    if authorization != expected:
+    # Constant-time compare to avoid leaking the token via response timing.
+    if not _constant_time_equal(authorization or "", expected):
         raise HTTPException(status_code=403, detail="invalid admin token")
 
 
