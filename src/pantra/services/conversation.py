@@ -66,6 +66,69 @@ class OutboundMessage:
     pending_handoffs: tuple[PendingHandoffNotification, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class _InboundRecoverySnapshot:
+    """Immutable source values used after the pipeline transaction rolls back."""
+
+    channel: str
+    channel_account_id: str
+    external_message_id: str
+    external_user_id: str
+    user_display_name: str | None
+    text: str | None
+    raw_json: str
+    received_at: datetime
+    audio_media_id: str | None
+
+    @classmethod
+    def capture(cls, inbound: InboundMessage) -> _InboundRecoverySnapshot:
+        return cls(
+            channel=inbound.channel,
+            channel_account_id=inbound.channel_account_id,
+            external_message_id=inbound.external_message_id,
+            external_user_id=inbound.external_user_id,
+            user_display_name=inbound.user_display_name,
+            text=inbound.text,
+            raw_json=json.dumps(inbound.raw, ensure_ascii=False, default=str),
+            received_at=inbound.received_at,
+            audio_media_id=inbound.audio_media_id,
+        )
+
+    def restore(self) -> InboundMessage:
+        raw_payload = json.loads(self.raw_json)
+        raw_payload["_pantra_recovery"] = {
+            "channel": self.channel,
+            "channel_account_id": self.channel_account_id,
+            "audio_media_id": self.audio_media_id,
+            "received_at": self.received_at.isoformat(),
+        }
+        return InboundMessage(
+            channel=self.channel,
+            channel_account_id=self.channel_account_id,
+            external_message_id=self.external_message_id,
+            external_user_id=self.external_user_id,
+            user_display_name=self.user_display_name,
+            text=self.text,
+            raw=raw_payload,
+            received_at=self.received_at,
+            audio_media_id=self.audio_media_id,
+        )
+
+
+def _recovery_message_description(snapshot: _InboundRecoverySnapshot) -> str:
+    if snapshot.text:
+        return pii.redact(snapshot.text)[:300]
+    if snapshot.audio_media_id:
+        return f"[audio message; media_id={snapshot.audio_media_id}]"
+    return f"[media payload; external_message_id={snapshot.external_message_id}]"
+
+
+def _outside_whatsapp_window(conversation: Conversation) -> bool:
+    return conversation.channel_type == ChannelType.whatsapp and not is_within_window(
+        conversation.last_inbound_at
+    )
+
+
 # ─── Public entry points ────────────────────────────────────────────────
 
 FALLBACK_REPLY = (
@@ -73,10 +136,47 @@ FALLBACK_REPLY = (
 )
 
 
+def _tool_definitions_for_turn(
+    turn: int,
+    definitions: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Disable tools on the last allowed turn so the model must verbalize."""
+    return [] if turn == MAX_TOOL_TURNS - 1 else definitions
+
+
 async def handle_inbound_whatsapp(inbound: InboundMessage) -> None:
     """WhatsApp orchestrator. Persists, processes, sends via Meta Cloud API."""
-    async with session_scope() as session:
-        outcome = await process_inbound(session, inbound)
+    recovery_snapshot = _InboundRecoverySnapshot.capture(inbound)
+    outcome: OutboundMessage | None = None
+    try:
+        async with session_scope() as session:
+            outcome = await process_inbound(session, inbound)
+    except Exception:
+        if outcome is not None and outcome.skipped_reason == "quota_exceeded":
+            # The quota policy completed successfully but its transaction did
+            # not. Do not misreport that commit failure as an assistant outage
+            # or publish the rolled-back quota notification.
+            log.exception(
+                "conversation.quota_commit_failed",
+                channel="whatsapp",
+                external_message_id=inbound.external_message_id,
+            )
+            return
+        # The pipeline runs in a fire-and-forget BackgroundTask: an unhandled
+        # exception (e.g. a sustained LLM outage after SDK retries) would leave
+        # the customer with no reply at all. Degrade gracefully instead.
+        log.exception(
+            "conversation.pipeline_failed",
+            channel="whatsapp",
+            external_message_id=inbound.external_message_id,
+        )
+        # The pipeline may have enriched the plain inbound object before a
+        # later provider failed (notably, STT can complete before
+        # classification/generation raises). Recapture those durable values at
+        # the exception boundary while retaining the original media payload.
+        recovery_snapshot = _InboundRecoverySnapshot.capture(inbound)
+        await _handle_pipeline_failure(recovery_snapshot)
+        return
 
     await dispatch_pending_handoffs(
         outcome.pending_handoffs,
@@ -94,6 +194,90 @@ async def handle_inbound_whatsapp(inbound: InboundMessage) -> None:
         await adapter.send_audio(to=inbound.external_user_id, audio_url=outcome.audio_url)
     if outcome.text:
         await adapter.send_text(to=inbound.external_user_id, body=outcome.text)
+
+
+async def _handle_pipeline_failure(snapshot: _InboundRecoverySnapshot) -> None:
+    """Persist and publish a last-resort handoff in a fresh transaction."""
+    pending_handoffs: tuple[PendingHandoffNotification, ...] = ()
+    fallback_delivery_allowed = False
+    try:
+        async with session_scope() as session:
+            inbound = snapshot.restore()
+            business, customer, conversation = await _resolve_entities(session, inbound)
+
+            # Recovery must preserve the normal pipeline's suppression rules.
+            if customer.opted_out:
+                log.info(
+                    "conversation.failure_recovery_opted_out",
+                    external_message_id=snapshot.external_message_id,
+                )
+                return
+
+            if not await _persist_inbound_idempotent(session, conversation, inbound):
+                log.info(
+                    "conversation.failure_recovery_duplicate",
+                    external_message_id=snapshot.external_message_id,
+                )
+                return
+
+            # Keep the inbound visible to the human who already owns this
+            # production conversation without creating a duplicate handoff or
+            # sending an automated fallback into the live exchange.
+            if (
+                conversation.status == ConversationStatus.human_needed
+                and not business.is_demo
+            ):
+                log.info(
+                    "conversation.failure_recovery_in_handoff",
+                    external_message_id=snapshot.external_message_id,
+                    conversation_id=str(conversation.id),
+                )
+                return
+
+            await _persist_fallback_reply(session, conversation)
+            pending_handoff = await _open_handoff(
+                session,
+                business,
+                conversation,
+                customer,
+                inbound,
+                reason="assistant_error",
+                summary=(
+                    f"Automatic handoff: the assistant failed to process a message "
+                    f"from {customer.name or customer.external_user_id}. "
+                    f"Last message: {_recovery_message_description(snapshot)}"
+                ),
+            )
+            pending_handoffs = (pending_handoff,)
+            fallback_delivery_allowed = not _outside_whatsapp_window(conversation)
+    except Exception:
+        log.exception(
+            "conversation.failure_handoff_failed",
+            external_message_id=snapshot.external_message_id,
+        )
+        return
+
+    await dispatch_pending_handoffs(
+        pending_handoffs,
+        error_event="conversation.failure_handoff_dispatch_failed",
+        external_message_id=snapshot.external_message_id,
+    )
+
+    if not fallback_delivery_allowed:
+        log.warning(
+            "conversation.failure_reply_outside_window",
+            external_message_id=snapshot.external_message_id,
+        )
+        return
+
+    try:
+        adapter = WhatsAppAdapter(phone_number_id=snapshot.channel_account_id)
+        await adapter.send_text(to=snapshot.external_user_id, body=FALLBACK_REPLY)
+    except Exception:
+        log.exception(
+            "conversation.failure_reply_failed",
+            external_message_id=snapshot.external_message_id,
+        )
 
 
 # Backwards-compatible alias used by api/webhooks/whatsapp.py.
@@ -269,15 +453,18 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
             if m.role != "system"
         ]
 
-        for _ in range(MAX_TOOL_TURNS):
+        for turn in range(MAX_TOOL_TURNS):
+            # On the final allowed turn, drop the tools so the model must
+            # verbalize instead of silently exhausting the tool loop.
+            final_turn = turn == MAX_TOOL_TURNS - 1
             result = await engine.step(
                 system_prompt=system_prompt,
                 messages=messages,
-                tool_definitions=tool_defs,
+                tool_definitions=_tool_definitions_for_turn(turn, tool_defs),
             )
             await _persist_ai_run(session, conversation, role="main", engine_result=result)
 
-            if result.tool_calls:
+            if result.tool_calls and not final_turn:
                 # Preserve the assistant turn so the next request has the
                 # corresponding tool_use blocks for our tool_result blocks.
                 messages.append({"role": "assistant", "content": result.assistant_blocks})
@@ -309,6 +496,7 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
                 break
 
     if not reply_text:
+        log.warning("conversation.engine_no_reply", conversation_id=str(conversation.id))
         await _persist_fallback_reply(session, conversation)
         if not pending_handoffs:
             pending_handoffs.append(
@@ -327,9 +515,8 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
                     ),
                 )
             )
-        if conversation.channel_type == ChannelType.whatsapp and not is_within_window(
-            conversation.last_inbound_at
-        ):
+        if _outside_whatsapp_window(conversation):
+            log.warning("conversation.outside_window", conversation_id=str(conversation.id))
             return OutboundMessage(
                 text=FALLBACK_REPLY,
                 skipped_reason="outside_24h_window",

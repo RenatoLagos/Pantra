@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 from contextlib import asynccontextmanager, nullcontext
@@ -16,7 +17,9 @@ from pydantic import ValidationError
 from starlette.datastructures import Headers
 
 import pantra.api.webhooks.whatsapp as whatsapp_router
+import pantra.audio.transcriber as transcriber
 import pantra.handoff.email as handoff_email
+import pantra.llm.client as llm_client
 import pantra.services.conversation as conversation_service
 import pantra.workers.audio_retention as audio_retention
 from pantra.api.demo.router import DemoMessageIn
@@ -1046,9 +1049,11 @@ async def test_outside_window_engine_fallback_dispatches_without_delivery(monkey
 
 @pytest.mark.parametrize("reason", ["classifier:complaint", "engine_no_reply"])
 async def test_whatsapp_handoff_commit_failure_does_not_publish(monkeypatch, reason):
-    side_effects: list[str] = []
+    external_side_effects: list[str] = []
+    recovery_calls: list[conversation_service._InboundRecoverySnapshot] = []
+    task = SimpleNamespace(reason=reason)
     pending = conversation_service.PendingHandoffNotification(
-        task=SimpleNamespace(reason=reason),
+        task=task,
         business_id=uuid.uuid4(),
         conversation_id=uuid.uuid4(),
         is_demo=False,
@@ -1068,16 +1073,19 @@ async def test_whatsapp_handoff_commit_failure_does_not_publish(monkeypatch, rea
         return outcome
 
     async def unexpected_dispatch(*_args, **_kwargs):
-        side_effects.append("dispatch")
+        external_side_effects.append("dispatch")
+
+    async def fake_recovery(snapshot):
+        recovery_calls.append(snapshot)
 
     class UnexpectedAdapter:
         def __init__(self, **_kwargs):
-            side_effects.append("adapter")
+            external_side_effects.append("adapter")
 
     inbound = InboundMessage(
         channel="whatsapp",
         channel_account_id="phone-id",
-        external_message_id=f"{reason}-rollback",
+        external_message_id=f"{reason}-commit-failure",
         external_user_id="4915100000000",
         user_display_name="Anna",
         text="hello",
@@ -1091,19 +1099,26 @@ async def test_whatsapp_handoff_commit_failure_does_not_publish(monkeypatch, rea
     )
     monkeypatch.setattr(conversation_service, "process_inbound", fake_pipeline)
     monkeypatch.setattr(conversation_service, "dispatch_handoff", unexpected_dispatch)
+    monkeypatch.setattr(conversation_service, "_handle_pipeline_failure", fake_recovery)
     monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
 
-    with pytest.raises(RuntimeError, match="commit failed"):
-        await conversation_service.handle_inbound_whatsapp(inbound)
+    await conversation_service.handle_inbound_whatsapp(inbound)
 
-    assert side_effects == []
+    assert external_side_effects == []
+    assert [snapshot.external_message_id for snapshot in recovery_calls] == [
+        inbound.external_message_id
+    ]
 
 
 @pytest.mark.parametrize("commit_succeeds", [False, True])
-async def test_quota_alert_publishes_once_only_after_commit(monkeypatch, commit_succeeds):
+async def test_quota_alert_publishes_once_only_after_commit(
+    monkeypatch,
+    commit_succeeds,
+):
     events: list[str] = []
+    task = SimpleNamespace(reason="quota_exceeded")
     pending = conversation_service.PendingHandoffNotification(
-        task=SimpleNamespace(reason="quota_exceeded"),
+        task=task,
         business_id=uuid.uuid4(),
         conversation_id=uuid.uuid4(),
         is_demo=False,
@@ -1127,6 +1142,9 @@ async def test_quota_alert_publishes_once_only_after_commit(monkeypatch, commit_
         assert events == ["commit"]
         events.append("dispatch")
 
+    async def unexpected_recovery(_snapshot):
+        events.append("phantom_recovery")
+
     class UnexpectedAdapter:
         def __init__(self, **_kwargs):
             events.append("adapter")
@@ -1144,12 +1162,640 @@ async def test_quota_alert_publishes_once_only_after_commit(monkeypatch, commit_
     monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
     monkeypatch.setattr(conversation_service, "process_inbound", fake_pipeline)
     monkeypatch.setattr(conversation_service, "dispatch_handoff", fake_dispatch)
+    monkeypatch.setattr(
+        conversation_service,
+        "_handle_pipeline_failure",
+        unexpected_recovery,
+    )
     monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
 
-    if commit_succeeds:
-        await conversation_service.handle_inbound_whatsapp(inbound)
-    else:
-        with pytest.raises(RuntimeError, match="commit failed"):
-            await conversation_service.handle_inbound_whatsapp(inbound)
+    await conversation_service.handle_inbound_whatsapp(inbound)
 
     assert events == ([] if not commit_succeeds else ["commit", "dispatch"])
+
+
+def test_anthropic_client_uses_bounded_timeout_and_retries(monkeypatch):
+    captured: dict[str, Any] = {}
+    sentinel = object()
+
+    def fake_client(**kwargs):
+        captured.update(kwargs)
+        return sentinel
+
+    monkeypatch.setattr(llm_client, "AsyncAnthropic", fake_client)
+    monkeypatch.setattr(settings, "anthropic_api_key", "test-key")
+    monkeypatch.setattr(settings, "llm_timeout_seconds", 12.5)
+    monkeypatch.setattr(settings, "llm_max_retries", 2)
+
+    assert llm_client.anthropic_client() is sentinel
+    assert captured == {
+        "api_key": "test-key",
+        "timeout": 12.5,
+        "max_retries": 2,
+    }
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("llm_timeout_seconds", 0),
+        ("stt_timeout_seconds", -1),
+        ("llm_max_retries", -1),
+        ("stt_max_retries", -1),
+    ],
+)
+def test_provider_bounds_reject_invalid_settings(field, value):
+    with pytest.raises(ValidationError) as exc_info:
+        Settings.model_validate(
+            {
+                "database_url": "postgresql+asyncpg://pantra:pantra@localhost/pantra",
+                "database_url_sync": "postgresql+psycopg2://pantra:pantra@localhost/pantra",
+                field: value,
+            }
+        )
+
+    assert field in str(exc_info.value)
+
+
+async def test_transcriber_uses_scoped_timeout_and_retries(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    class Transcriptions:
+        async def create(self, **_kwargs):
+            return " transcript "
+
+    def fake_client(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(audio=SimpleNamespace(transcriptions=Transcriptions()))
+
+    monkeypatch.setattr(transcriber, "AsyncOpenAI", fake_client)
+    monkeypatch.setattr(settings, "openai_api_key", "test-key")
+    monkeypatch.setattr(settings, "stt_timeout_seconds", 18.0)
+    monkeypatch.setattr(settings, "stt_max_retries", 1)
+
+    assert await transcriber.transcribe(b"audio") == "transcript"
+    assert captured == {
+        "api_key": "test-key",
+        "timeout": 18.0,
+        "max_retries": 1,
+    }
+
+
+def test_last_tool_turn_disables_tools():
+    definitions = [{"name": "book"}]
+
+    assert conversation_service._tool_definitions_for_turn(0, definitions) is definitions
+    assert (
+        conversation_service._tool_definitions_for_turn(
+            conversation_service.MAX_TOOL_TURNS - 1,
+            definitions,
+        )
+        == []
+    )
+
+
+async def test_pipeline_failure_uses_fallback_path(monkeypatch):
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="message-id",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="hello",
+        raw={},
+        received_at=datetime.now(tz=UTC),
+    )
+    fallback_calls: list[conversation_service._InboundRecoverySnapshot] = []
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        yield object()
+
+    async def failing_pipeline(_session, _inbound):
+        raise RuntimeError("provider outage")
+
+    async def fake_fallback(received):
+        fallback_calls.append(received)
+
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(conversation_service, "process_inbound", failing_pipeline)
+    monkeypatch.setattr(conversation_service, "_handle_pipeline_failure", fake_fallback)
+
+    await conversation_service.handle_inbound_whatsapp(inbound)
+
+    assert len(fallback_calls) == 1
+    assert fallback_calls[0].external_message_id == inbound.external_message_id
+    assert fallback_calls[0].text == inbound.text
+    assert fallback_calls[0].raw_json == "{}"
+
+
+async def test_pipeline_cancellation_is_not_recovered(monkeypatch):
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="message-id",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="hello",
+        raw={},
+        received_at=datetime.now(tz=UTC),
+    )
+    fallback_called = False
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        yield object()
+
+    async def cancelled_pipeline(_session, _inbound):
+        raise asyncio.CancelledError
+
+    async def fake_fallback(_snapshot):
+        nonlocal fallback_called
+        fallback_called = True
+
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(conversation_service, "process_inbound", cancelled_pipeline)
+    monkeypatch.setattr(conversation_service, "_handle_pipeline_failure", fake_fallback)
+
+    with pytest.raises(asyncio.CancelledError):
+        await conversation_service.handle_inbound_whatsapp(inbound)
+
+    assert fallback_called is False
+
+
+async def test_pipeline_recovery_commits_transcript_before_dispatch(monkeypatch):
+    events: list[str] = []
+    added: list[object] = []
+    fallback_sends: list[tuple[str, str]] = []
+    scope_calls = 0
+
+    class EmptyResult:
+        def first(self):
+            return None
+
+    class FakeSession:
+        async def execute(self, _statement):
+            return EmptyResult()
+
+        def add(self, value):
+            if isinstance(value, HandoffTask) and value.id is None:
+                value.id = uuid.uuid4()
+            added.append(value)
+
+        async def flush(self):
+            return None
+
+    session = FakeSession()
+    business = SimpleNamespace(id=uuid.uuid4(), is_demo=False)
+    customer = SimpleNamespace(
+        name="Anna",
+        external_user_id="4915100000000",
+        opted_out=False,
+    )
+    conversation = SimpleNamespace(
+        id=uuid.uuid4(),
+        status=ConversationStatus.active,
+        channel_type=conversation_service.ChannelType.whatsapp,
+        last_inbound_at=None,
+        last_message_at=None,
+    )
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        nonlocal scope_calls
+        scope_calls += 1
+        if scope_calls == 1:
+            yield object()
+            return
+        yield session
+        events.append("commit")
+
+    async def pipeline_fails_after_transcription(_session, received):
+        received.text = "completed audio transcript"
+        raise RuntimeError("classifier unavailable")
+
+    async def fake_resolve(_session, _inbound):
+        return business, customer, conversation
+
+    async def failing_dispatch(_task, **_kwargs):
+        assert events == ["commit"]
+        events.append("dispatch")
+        raise RuntimeError("telegram unavailable")
+
+    class FakeAdapter:
+        def __init__(self, *, phone_number_id):
+            self.phone_number_id = phone_number_id
+
+        async def send_text(self, *, to, body):
+            fallback_sends.append((to, body))
+
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="audio-message-id",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text=None,
+        raw={"type": "audio", "audio": {"id": "media-id"}},
+        received_at=datetime.now(tz=UTC),
+        audio_media_id="media-id",
+    )
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(
+        conversation_service,
+        "process_inbound",
+        pipeline_fails_after_transcription,
+    )
+    monkeypatch.setattr(conversation_service, "_resolve_entities", fake_resolve)
+    monkeypatch.setattr(conversation_service, "dispatch_handoff", failing_dispatch)
+    monkeypatch.setattr(conversation_service, "WhatsAppAdapter", FakeAdapter)
+
+    await conversation_service.handle_inbound_whatsapp(inbound)
+
+    messages = [value for value in added if isinstance(value, Message)]
+    customer_message = next(value for value in messages if value.sender == MessageSender.customer)
+    fallback_message = next(value for value in messages if value.sender == MessageSender.ai)
+    handoff = next(value for value in added if isinstance(value, HandoffTask))
+
+    assert customer_message.channel_message_id == "audio-message-id"
+    assert customer_message.text == "completed audio transcript"
+    assert customer_message.raw_payload["_pantra_recovery"]["audio_media_id"] == "media-id"
+    assert fallback_message.text == conversation_service.FALLBACK_REPLY
+    assert handoff.reason == "assistant_error"
+    assert conversation.status == ConversationStatus.human_needed
+    assert events == ["commit", "dispatch"]
+    assert fallback_sends == [
+        ("4915100000000", conversation_service.FALLBACK_REPLY),
+    ]
+
+
+async def test_delayed_recovery_dispatches_handoff_without_free_text(monkeypatch):
+    events: list[str] = []
+    business = SimpleNamespace(id=uuid.uuid4(), is_demo=False)
+    customer = SimpleNamespace(
+        name="Anna",
+        external_user_id="4915100000000",
+        opted_out=False,
+    )
+    conversation = SimpleNamespace(
+        id=uuid.uuid4(),
+        status=ConversationStatus.active,
+        channel_type=conversation_service.ChannelType.whatsapp,
+        last_inbound_at=None,
+    )
+    task = SimpleNamespace(reason="assistant_error")
+    pending = conversation_service.PendingHandoffNotification(
+        task=task,
+        business_id=business.id,
+        conversation_id=conversation.id,
+        is_demo=False,
+    )
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        yield object()
+        events.append("commit")
+
+    async def fake_resolve(_session, _inbound):
+        return business, customer, conversation
+
+    async def persist_inbound(_session, received_conversation, inbound):
+        received_conversation.last_inbound_at = inbound.received_at
+        events.append("persist_inbound")
+        return True
+
+    async def persist_fallback(*_args):
+        events.append("persist_fallback")
+
+    async def open_handoff(*_args, **_kwargs):
+        events.append("persist_handoff")
+        return pending
+
+    async def fake_dispatch(received_task, **_kwargs):
+        assert received_task is task
+        assert events[-1] == "commit"
+        events.append("dispatch")
+
+    class UnexpectedAdapter:
+        def __init__(self, **_kwargs):
+            events.append("adapter")
+
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="delayed-recovery",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="delayed webhook",
+        raw={},
+        received_at=datetime.now(tz=UTC) - timedelta(hours=25),
+    )
+    snapshot = conversation_service._InboundRecoverySnapshot.capture(inbound)
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(conversation_service, "_resolve_entities", fake_resolve)
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_inbound_idempotent",
+        persist_inbound,
+    )
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_fallback_reply",
+        persist_fallback,
+    )
+    monkeypatch.setattr(conversation_service, "_open_handoff", open_handoff)
+    monkeypatch.setattr(conversation_service, "dispatch_handoff", fake_dispatch)
+    monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
+
+    await conversation_service._handle_pipeline_failure(snapshot)
+
+    assert events == [
+        "persist_inbound",
+        "persist_fallback",
+        "persist_handoff",
+        "commit",
+        "dispatch",
+    ]
+
+
+async def test_duplicate_pipeline_recovery_has_no_side_effects(monkeypatch):
+    events: list[str] = []
+    side_effects: list[str] = []
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        try:
+            yield object()
+        finally:
+            events.append("closed")
+
+    async def fake_resolve(_session, _inbound):
+        return (
+            SimpleNamespace(id=uuid.uuid4(), is_demo=False),
+            SimpleNamespace(
+                name="Anna",
+                external_user_id="4915100000000",
+                opted_out=False,
+            ),
+            SimpleNamespace(id=uuid.uuid4(), status=ConversationStatus.active),
+        )
+
+    async def duplicate_inbound(*_args):
+        return False
+
+    async def unexpected_fallback(*_args):
+        side_effects.append("fallback_message")
+
+    async def unexpected_handoff(*_args, **_kwargs):
+        side_effects.append("handoff")
+
+    async def unexpected_dispatch(*_args, **_kwargs):
+        side_effects.append("dispatch")
+
+    class UnexpectedAdapter:
+        def __init__(self, **_kwargs):
+            side_effects.append("adapter")
+
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="duplicate-message",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="hello",
+        raw={"type": "text"},
+        received_at=datetime.now(tz=UTC),
+    )
+    snapshot = conversation_service._InboundRecoverySnapshot.capture(inbound)
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(conversation_service, "_resolve_entities", fake_resolve)
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_inbound_idempotent",
+        duplicate_inbound,
+    )
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_fallback_reply",
+        unexpected_fallback,
+    )
+    monkeypatch.setattr(conversation_service, "_persist_handoff", unexpected_handoff)
+    monkeypatch.setattr(conversation_service, "dispatch_handoff", unexpected_dispatch)
+    monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
+
+    await conversation_service._handle_pipeline_failure(snapshot)
+
+    assert events == ["closed"]
+    assert side_effects == []
+
+
+async def test_opted_out_pipeline_recovery_preserves_suppression(monkeypatch):
+    events: list[str] = []
+    side_effects: list[str] = []
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        yield object()
+        events.append("commit")
+
+    async def fake_resolve(_session, _inbound):
+        return (
+            SimpleNamespace(id=uuid.uuid4(), is_demo=False),
+            SimpleNamespace(
+                name="Anna",
+                external_user_id="4915100000000",
+                opted_out=True,
+            ),
+            SimpleNamespace(id=uuid.uuid4(), status=ConversationStatus.active),
+        )
+
+    async def unexpected(*_args, **_kwargs):
+        side_effects.append("unexpected")
+
+    class UnexpectedAdapter:
+        def __init__(self, **_kwargs):
+            side_effects.append("adapter")
+
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="opted-out-message",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="stop",
+        raw={"type": "text"},
+        received_at=datetime.now(tz=UTC),
+    )
+    snapshot = conversation_service._InboundRecoverySnapshot.capture(inbound)
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(conversation_service, "_resolve_entities", fake_resolve)
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_inbound_idempotent",
+        unexpected,
+    )
+    monkeypatch.setattr(conversation_service, "_persist_fallback_reply", unexpected)
+    monkeypatch.setattr(conversation_service, "_open_handoff", unexpected)
+    monkeypatch.setattr(conversation_service, "dispatch_handoff", unexpected)
+    monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
+
+    await conversation_service._handle_pipeline_failure(snapshot)
+
+    assert events == ["commit"]
+    assert side_effects == []
+
+
+async def test_pipeline_recovery_keeps_inbound_visible_during_handoff(monkeypatch):
+    events: list[str] = []
+    side_effects: list[str] = []
+
+    @asynccontextmanager
+    async def fake_session_scope():
+        yield object()
+        events.append("commit")
+
+    conversation = SimpleNamespace(
+        id=uuid.uuid4(),
+        status=ConversationStatus.human_needed,
+    )
+
+    async def fake_resolve(_session, _inbound):
+        return (
+            SimpleNamespace(id=uuid.uuid4(), is_demo=False),
+            SimpleNamespace(
+                name="Anna",
+                external_user_id="4915100000000",
+                opted_out=False,
+            ),
+            conversation,
+        )
+
+    async def persist_inbound(*_args):
+        events.append("persist_inbound")
+        return True
+
+    async def unexpected(*_args, **_kwargs):
+        side_effects.append("unexpected")
+
+    class UnexpectedAdapter:
+        def __init__(self, **_kwargs):
+            side_effects.append("adapter")
+
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="human-owned-message",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="one more detail",
+        raw={"type": "text"},
+        received_at=datetime.now(tz=UTC),
+    )
+    snapshot = conversation_service._InboundRecoverySnapshot.capture(inbound)
+    monkeypatch.setattr(conversation_service, "session_scope", fake_session_scope)
+    monkeypatch.setattr(conversation_service, "_resolve_entities", fake_resolve)
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_inbound_idempotent",
+        persist_inbound,
+    )
+    monkeypatch.setattr(conversation_service, "_persist_fallback_reply", unexpected)
+    monkeypatch.setattr(conversation_service, "_open_handoff", unexpected)
+    monkeypatch.setattr(conversation_service, "dispatch_handoff", unexpected)
+    monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
+
+    await conversation_service._handle_pipeline_failure(snapshot)
+
+    assert events == ["persist_inbound", "commit"]
+    assert side_effects == []
+
+
+async def test_pipeline_recovery_commit_failure_has_no_external_side_effects(monkeypatch):
+    external_side_effects: list[str] = []
+    commit_attempts: list[str] = []
+    info_logs: list[str] = []
+    error_logs: list[str] = []
+
+    @asynccontextmanager
+    async def failing_commit_session_scope():
+        yield object()
+        commit_attempts.append("reached")
+        raise RuntimeError("commit failed")
+
+    async def fake_resolve(_session, _inbound):
+        return (
+            SimpleNamespace(id=uuid.uuid4(), is_demo=False),
+            SimpleNamespace(
+                name="Anna",
+                external_user_id="4915100000000",
+                opted_out=False,
+            ),
+            SimpleNamespace(
+                id=uuid.uuid4(),
+                status=ConversationStatus.active,
+                channel_type=conversation_service.ChannelType.whatsapp,
+                last_inbound_at=datetime.now(tz=UTC),
+            ),
+        )
+
+    async def persist_inbound(*_args):
+        return True
+
+    async def persist_fallback(*_args):
+        return None
+
+    async def persist_handoff(*_args, **_kwargs):
+        return SimpleNamespace(id=uuid.uuid4())
+
+    async def unexpected_dispatch(*_args, **_kwargs):
+        external_side_effects.append("dispatch")
+
+    class UnexpectedAdapter:
+        def __init__(self, **_kwargs):
+            external_side_effects.append("adapter")
+
+    def capture_info(event, **_kwargs):
+        info_logs.append(event)
+
+    def capture_exception(event, **_kwargs):
+        error_logs.append(event)
+
+    inbound = InboundMessage(
+        channel="whatsapp",
+        channel_account_id="phone-id",
+        external_message_id="commit-failure-message",
+        external_user_id="4915100000000",
+        user_display_name="Anna",
+        text="hello",
+        raw={"type": "text"},
+        received_at=datetime.now(tz=UTC),
+    )
+    snapshot = conversation_service._InboundRecoverySnapshot.capture(inbound)
+    monkeypatch.setattr(
+        conversation_service,
+        "session_scope",
+        failing_commit_session_scope,
+    )
+    monkeypatch.setattr(conversation_service, "_resolve_entities", fake_resolve)
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_inbound_idempotent",
+        persist_inbound,
+    )
+    monkeypatch.setattr(
+        conversation_service,
+        "_persist_fallback_reply",
+        persist_fallback,
+    )
+    monkeypatch.setattr(conversation_service, "_persist_handoff", persist_handoff)
+    monkeypatch.setattr(conversation_service, "dispatch_handoff", unexpected_dispatch)
+    monkeypatch.setattr(conversation_service, "WhatsAppAdapter", UnexpectedAdapter)
+    monkeypatch.setattr(conversation_service.log, "info", capture_info)
+    monkeypatch.setattr(conversation_service.log, "exception", capture_exception)
+
+    await conversation_service._handle_pipeline_failure(snapshot)
+
+    assert commit_attempts == ["reached"]
+    assert external_side_effects == []
+    assert info_logs == []
+    assert error_logs == ["conversation.failure_handoff_failed"]

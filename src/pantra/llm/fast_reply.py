@@ -15,9 +15,7 @@ import time
 from dataclasses import dataclass
 from textwrap import dedent
 
-from anthropic import AsyncAnthropic
-
-from pantra.config import settings
+from pantra.llm.client import anthropic_client
 from pantra.llm.router import choose
 
 FAST_REPLY_SYSTEM = dedent(
@@ -64,7 +62,7 @@ async def reply_smalltalk(
         raise NotImplementedError(
             f"Fast-reply provider {choice.provider!r} not wired yet."
         )
-    client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+    client = anthropic_client()
 
     system_text = FAST_REPLY_SYSTEM.format(
         business_name=business_name,
@@ -87,9 +85,7 @@ async def reply_smalltalk(
     )
     latency_ms = int((time.perf_counter() - t0) * 1000)
 
-    reply = "".join(
-        block.text for block in resp.content if getattr(block, "type", "") == "text"
-    ).strip()
+    reply = "".join(block.text for block in resp.content if block.type == "text").strip()
 
     return FastReplyResult(
         reply_text=reply,

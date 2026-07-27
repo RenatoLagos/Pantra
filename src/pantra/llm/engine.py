@@ -4,10 +4,8 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from anthropic import AsyncAnthropic
-
 from pantra.config import settings
-from pantra.llm.memory.window import WindowMessage
+from pantra.llm.client import anthropic_client
 from pantra.llm.router import choose
 
 
@@ -42,7 +40,7 @@ class ConversationEngine:
             raise NotImplementedError(
                 f"Engine provider {self.choice.provider!r} not wired yet."
             )
-        self._client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._client = anthropic_client()
 
     async def step(
         self,
@@ -69,15 +67,21 @@ class ConversationEngine:
                 "cache_control": {"type": "ephemeral"},
             }
 
+        # Passing no tools forces the model to answer with text instead of
+        # calling another tool — used on the final loop turn (see conversation.py)
+        # to guarantee a customer-facing reply.
+        create_kwargs: dict[str, Any] = {
+            "model": self.choice.model,
+            "max_tokens": settings.llm_main_max_tokens,
+            "temperature": settings.llm_main_temperature,
+            "system": cached_system,
+            "messages": messages,
+        }
+        if cached_tools:
+            create_kwargs["tools"] = cached_tools
+
         t0 = time.perf_counter()
-        resp = await self._client.messages.create(
-            model=self.choice.model,
-            max_tokens=settings.llm_main_max_tokens,
-            temperature=settings.llm_main_temperature,
-            system=cached_system,
-            tools=cached_tools,
-            messages=messages,
-        )
+        resp = await self._client.messages.create(**create_kwargs)
         latency_ms = int((time.perf_counter() - t0) * 1000)
 
         text_parts: list[str] = []

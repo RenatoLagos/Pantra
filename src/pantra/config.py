@@ -74,6 +74,12 @@ class Settings(BaseSettings):
     llm_main_max_tokens: int = 1024
     llm_main_temperature: float = 0.4
 
+    # Per-request timeout (seconds) and bounded retries for LLM calls. Keeps a
+    # hung upstream call from holding a DB session open for the SDK default
+    # (~10 min); the SDK honors Retry-After on 429 and backs off on 5xx.
+    llm_timeout_seconds: float = Field(default=30.0, gt=0)
+    llm_max_retries: int = Field(default=3, ge=0)
+
     # ─── Memory ──
     memory_window_messages: int = 20
     memory_summarize_after: int = 40
@@ -95,6 +101,12 @@ class Settings(BaseSettings):
     elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"      # Rachel (multilingual)
     elevenlabs_model_id: str = "eleven_turbo_v2_5"          # multilingual + low latency
     elevenlabs_api_base: str = "https://api.elevenlabs.io/v1"
+
+    # Speech-to-text (Whisper) call: per-request timeout + bounded retries.
+    # Kept separate from the chat LLM knobs so STT (which can run longer on
+    # bigger recordings) can be tuned independently.
+    stt_timeout_seconds: float = Field(default=30.0, gt=0)
+    stt_max_retries: int = Field(default=3, ge=0)
 
     audio_storage_path: str = "./storage/audio"
     # Inbound recordings (raw patient voice — sensitive PII) are stored OUTSIDE

@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from typing import Literal
 
-from anthropic import AsyncAnthropic
 from pydantic import BaseModel, Field
 
 from pantra.config import settings
+from pantra.llm.client import anthropic_client
 from pantra.llm.prompts.classifier import CLASSIFIER_SYSTEM_PROMPT, render_user_prompt
 from pantra.llm.router import choose
 from pantra.privacy import pii
@@ -41,7 +41,7 @@ class Classifier:
             raise NotImplementedError(
                 f"Classifier provider {self.choice.provider!r} not wired yet."
             )
-        self._client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._client = anthropic_client()
 
     async def classify(self, *, text: str, business_domain: str) -> ClassifierOutput:
         # Redact PII BEFORE sending to the LLM and before logging.
@@ -61,7 +61,7 @@ class Classifier:
             # JSON-mode-equivalent: ask for JSON in the prompt and parse.
         )
         raw = "".join(
-            block.text for block in message.content if getattr(block, "type", "") == "text"
+            block.text for block in message.content if block.type == "text"
         ).strip()
         return _parse(raw)
 
