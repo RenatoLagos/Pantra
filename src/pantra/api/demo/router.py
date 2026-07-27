@@ -16,7 +16,11 @@ from pantra.db import session_scope
 from pantra.logging import log
 from pantra.models import Business, ChannelType, Conversation, ConversationStatus, Customer
 from pantra.ratelimit import allow
-from pantra.services.conversation import OutboundMessage, process_inbound
+from pantra.services.conversation import (
+    OutboundMessage,
+    dispatch_pending_handoffs,
+    process_inbound,
+)
 
 router = APIRouter()
 
@@ -232,11 +236,17 @@ async def _run_pipeline(web: WebInbound) -> OutboundMessage:
     inbound = to_inbound_message(web)
     try:
         async with session_scope() as session:
-            return await process_inbound(session, inbound)
+            outcome = await process_inbound(session, inbound)
     except ValueError as e:
         # Most likely: demo business slug not seeded yet.
         log.warning("demo.pipeline_value_error", error=str(e))
         raise HTTPException(status_code=503, detail="demo not ready — run seed_demos.py") from e
+    await dispatch_pending_handoffs(
+        outcome.pending_handoffs,
+        error_event="demo.handoff_dispatch_failed",
+        external_message_id=inbound.external_message_id,
+    )
+    return outcome
 
 
 def _serialize(outcome: OutboundMessage) -> dict:

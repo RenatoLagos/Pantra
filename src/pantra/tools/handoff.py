@@ -4,7 +4,7 @@ import uuid
 
 from pydantic import BaseModel
 
-from pantra.handoff import dispatch as send_handoff
+from pantra.handoff.pending import PendingHandoffNotification
 from pantra.models import ConversationStatus, HandoffStatus, HandoffTask
 from pantra.tools.base import Tool, ToolContext
 
@@ -54,10 +54,12 @@ class HandoffToHumanTool(Tool[HandoffIn, HandoffOut]):
             if convo:
                 convo.status = ConversationStatus.human_needed
 
-        await send_handoff(
-            task,
-            business_id=ctx.business_id,
-            conversation_id=ctx.conversation_id,
-            is_demo=is_demo,
+        ctx.pending_handoffs.append(
+            PendingHandoffNotification(
+                task=task,
+                business_id=ctx.business_id,
+                conversation_id=ctx.conversation_id,
+                is_demo=is_demo,
+            )
         )
         return HandoffOut(handoff_id=task.id, status=task.status)

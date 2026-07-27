@@ -13,11 +13,12 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pantra.handoff.pending import PendingHandoffNotification
 from pantra.models import Business, Conversation, HandoffStatus, HandoffTask
 
 # Hard limits per pricing v4 tier. Hard-coded for MVP — when we wire
@@ -59,12 +60,12 @@ def get_limit(plan: str) -> int:
 
 
 def _utc_month_start(now: datetime | None = None) -> datetime:
-    n = now or datetime.now(tz=timezone.utc)
+    n = now or datetime.now(tz=UTC)
     return n.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
 def _utc_today_start(now: datetime | None = None) -> datetime:
-    n = now or datetime.now(tz=timezone.utc)
+    n = now or datetime.now(tz=UTC)
     return n.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
@@ -92,11 +93,11 @@ async def maybe_notify_quota_exceeded(
     business: Business,
     conversation: Conversation,
     status: QuotaStatus,
-) -> bool:
-    """Create + dispatch ONE HandoffTask per day for this business.
+) -> PendingHandoffNotification | None:
+    """Create and queue ONE HandoffTask per day for this business.
 
-    Uses the existing HandoffTask + dispatch wiring so the owner sees the
-    alert on Telegram and email. Returns True iff a new task was created.
+    The transaction owner publishes the returned notification only after
+    commit. Returns ``None`` when today's alert already exists.
     """
     existing = await session.execute(
         select(HandoffTask.id).where(
@@ -106,7 +107,7 @@ async def maybe_notify_quota_exceeded(
         )
     )
     if existing.first():
-        return False
+        return None
 
     task = HandoffTask(
         business_id=business.id,
@@ -125,14 +126,9 @@ async def maybe_notify_quota_exceeded(
     session.add(task)
     await session.flush()
 
-    # Avoid an import cycle: handoff.dispatch pulls in services indirectly
-    # through the email/telegram modules.
-    from pantra.handoff import dispatch as dispatch_handoff
-
-    await dispatch_handoff(
-        task,
+    return PendingHandoffNotification(
+        task=task,
         business_id=business.id,
         conversation_id=conversation.id,
         is_demo=business.is_demo,
     )
-    return True

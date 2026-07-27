@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
-from typing import Any, ClassVar, Generic, TypeVar
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
 
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pantra.handoff.pending import PendingHandoffNotification
 from pantra.models import ToolIdempotency
-
-I = TypeVar("I", bound=BaseModel)
-O = TypeVar("O", bound=BaseModel)
 
 
 class ToolError(Exception):
@@ -33,9 +31,10 @@ class ToolContext:
     is_demo: bool
     session: AsyncSession
     idempotency_key: str  # e.g. f"whatsapp:{message_id}:{tool_name}"
+    pending_handoffs: list[PendingHandoffNotification] = field(default_factory=list)
 
 
-class Tool(Generic[I, O]):
+class Tool[InputModel: BaseModel, OutputModel: BaseModel]:
     """Base class for every LLM-callable tool.
 
     Contract:
@@ -49,10 +48,10 @@ class Tool(Generic[I, O]):
 
     name: ClassVar[str]
     description: ClassVar[str]
-    input_model: ClassVar[type[BaseModel]]
-    output_model: ClassVar[type[BaseModel]]
+    input_model: type[InputModel]
+    output_model: type[OutputModel]
 
-    async def run(self, ctx: ToolContext, payload: I) -> O:
+    async def run(self, ctx: ToolContext, payload: InputModel) -> OutputModel:
         cached = await self._lookup_cache(ctx)
         if cached is not None:
             return self.output_model.model_validate(cached)
@@ -61,7 +60,7 @@ class Tool(Generic[I, O]):
         await self._store_cache(ctx, result.model_dump(mode="json"))
         return result
 
-    async def _execute(self, ctx: ToolContext, payload: I) -> O:
+    async def _execute(self, ctx: ToolContext, payload: InputModel) -> OutputModel:
         raise NotImplementedError
 
     # ─── Idempotency cache ──
@@ -84,7 +83,9 @@ class Tool(Generic[I, O]):
         await ctx.session.flush()
 
 
-def anthropic_tool_definitions(tools: list[Tool]) -> list[dict[str, Any]]:
+def anthropic_tool_definitions(
+    tools: list[Tool[BaseModel, BaseModel]],
+) -> list[dict[str, Any]]:
     """Render tools to the shape Anthropic's tool-use API expects."""
     return [
         {

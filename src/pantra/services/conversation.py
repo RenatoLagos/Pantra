@@ -8,9 +8,9 @@ webhook background task uses.
 from __future__ import annotations
 
 import json
-import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,10 +25,11 @@ from pantra.channels.whatsapp.window import is_within_window
 from pantra.config import settings
 from pantra.db import session_scope
 from pantra.handoff import dispatch as dispatch_handoff
+from pantra.handoff.pending import PendingHandoffNotification
 from pantra.llm.classifier import Classifier, ClassifierOutput
 from pantra.llm.engine import ConversationEngine, EngineResult
 from pantra.llm.fast_reply import FastReplyResult, reply_smalltalk
-from pantra.llm.memory.window import WindowMessage, load_window
+from pantra.llm.memory.window import load_window
 from pantra.llm.prompts.system import build_system_prompt
 from pantra.llm.router import choose
 from pantra.logging import log
@@ -62,14 +63,26 @@ class OutboundMessage:
     audio_url: str | None = None
     handoff_triggered: bool = False
     skipped_reason: str | None = None
+    pending_handoffs: tuple[PendingHandoffNotification, ...] = ()
 
 
 # ─── Public entry points ────────────────────────────────────────────────
+
+FALLBACK_REPLY = (
+    "Sorry — I'm having trouble right now. Someone from the team will get back to you shortly."
+)
+
 
 async def handle_inbound_whatsapp(inbound: InboundMessage) -> None:
     """WhatsApp orchestrator. Persists, processes, sends via Meta Cloud API."""
     async with session_scope() as session:
         outcome = await process_inbound(session, inbound)
+
+    await dispatch_pending_handoffs(
+        outcome.pending_handoffs,
+        error_event="conversation.handoff_dispatch_failed",
+        external_message_id=inbound.external_message_id,
+    )
 
     if outcome.handoff_triggered or outcome.skipped_reason:
         return
@@ -101,15 +114,22 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
     if not await _persist_inbound_idempotent(session, conversation, inbound):
         return OutboundMessage(skipped_reason="duplicate_delivery")
 
+    pending_handoffs: list[PendingHandoffNotification] = []
+
     # Pricing v4 hard-limit guard — no LLM/STT spend once the plan cap is
     # hit. Demos always bypass (their cost is marketing). Owner gets ONE
     # Telegram/email per day via the existing HandoffTask dispatch.
     if not business.is_demo:
         quota = await usage.quota_status(session, business)
         if quota.exceeded:
-            await usage.maybe_notify_quota_exceeded(
-                session, business, conversation, quota
+            pending_quota_alert = await usage.maybe_notify_quota_exceeded(
+                session,
+                business,
+                conversation,
+                quota,
             )
+            if pending_quota_alert is not None:
+                pending_handoffs.append(pending_quota_alert)
             log.info(
                 "conversation.quota_exceeded",
                 business_id=str(business.id),
@@ -117,7 +137,10 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
                 used=quota.used,
                 limit=quota.limit,
             )
-            return OutboundMessage(skipped_reason="quota_exceeded")
+            return OutboundMessage(
+                skipped_reason="quota_exceeded",
+                pending_handoffs=tuple(pending_handoffs),
+            )
 
     if conversation.status == ConversationStatus.human_needed:
         if not business.is_demo:
@@ -174,9 +197,21 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
 
     # Handoff path
     if classification.needs_human:
-        await _open_handoff(session, business, conversation, customer, inbound, classification)
+        pending_handoffs.append(
+            await _open_handoff(
+                session,
+                business,
+                conversation,
+                customer,
+                inbound,
+                classification,
+            )
+        )
         if not business.is_demo:
-            return OutboundMessage(handoff_triggered=True)
+            return OutboundMessage(
+                handoff_triggered=True,
+                pending_handoffs=tuple(pending_handoffs),
+            )
         # Demo: handoff is recorded for analytics, but we keep replying so
         # the prospect can keep evaluating the bot.
 
@@ -228,7 +263,7 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
         engine = ConversationEngine()
         tool_defs = anthropic_tool_definitions(list(TOOL_REGISTRY.values()))
 
-        messages: list[dict] = [
+        messages: list[dict[str, Any]] = [
             {"role": m.role, "content": m.content}
             for m in history
             if m.role != "system"
@@ -248,32 +283,76 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
                 messages.append({"role": "assistant", "content": result.assistant_blocks})
 
                 tool_results = await _execute_tools(
-                    session, business, customer, conversation, inbound, result.tool_calls
+                    session,
+                    business,
+                    customer,
+                    conversation,
+                    inbound,
+                    result.tool_calls,
+                    pending_handoffs,
                 )
                 messages.append({"role": "user", "content": tool_results})
 
-                if any(tc.get("name") == "handoff_to_human" for tc in result.tool_calls):
-                    if not business.is_demo:
-                        return OutboundMessage(handoff_triggered=True)
-                    # Demo: tool already logged + dispatched (or skipped).
-                    # Keep looping so the engine produces a final
-                    # user-visible reply.
+                if (
+                    any(tc.get("name") == "handoff_to_human" for tc in result.tool_calls)
+                    and not business.is_demo
+                ):
+                    return OutboundMessage(
+                        handoff_triggered=True,
+                        pending_handoffs=tuple(pending_handoffs),
+                    )
+                # Demo: the handoff is queued for post-commit publication.
+                # Keep looping so the engine produces a final user-visible
+                # reply.
             else:
                 reply_text = result.reply_text
                 break
 
     if not reply_text:
-        return OutboundMessage(skipped_reason="empty_engine_reply")
+        await _persist_fallback_reply(session, conversation)
+        if not pending_handoffs:
+            pending_handoffs.append(
+                await _open_handoff(
+                    session,
+                    business,
+                    conversation,
+                    customer,
+                    inbound,
+                    reason="engine_no_reply",
+                    summary=(
+                        f"Automatic handoff: the assistant could not produce a reply for "
+                        f"{customer.name or customer.external_user_id} within "
+                        f"{MAX_TOOL_TURNS} turns. "
+                        f"Last message: {pii.redact(inbound.text or '')[:300]}"
+                    ),
+                )
+            )
+        if conversation.channel_type == ChannelType.whatsapp and not is_within_window(
+            conversation.last_inbound_at
+        ):
+            return OutboundMessage(
+                text=FALLBACK_REPLY,
+                skipped_reason="outside_24h_window",
+                pending_handoffs=tuple(pending_handoffs),
+            )
+        return OutboundMessage(
+            text=FALLBACK_REPLY,
+            pending_handoffs=tuple(pending_handoffs),
+        )
 
     # Persist the AI reply
     await _persist_ai_reply(session, conversation, reply_text)
-    conversation.last_message_at = datetime.now(tz=timezone.utc)
+    conversation.last_message_at = datetime.now(tz=UTC)
 
     # WhatsApp 24h window check before sending free text
-    if conversation.channel_type == ChannelType.whatsapp:
-        if not is_within_window(conversation.last_inbound_at):
-            log.warning("conversation.outside_window", conversation_id=str(conversation.id))
-            return OutboundMessage(skipped_reason="outside_24h_window")
+    if conversation.channel_type == ChannelType.whatsapp and not is_within_window(
+        conversation.last_inbound_at
+    ):
+        log.warning("conversation.outside_window", conversation_id=str(conversation.id))
+        return OutboundMessage(
+            skipped_reason="outside_24h_window",
+            pending_handoffs=tuple(pending_handoffs),
+        )
 
     # TTS if applicable
     audio_url: str | None = None
@@ -288,7 +367,11 @@ async def process_inbound(session: AsyncSession, inbound: InboundMessage) -> Out
             # TTS failures must NOT block the text reply.
             log.warning("conversation.tts_failed", error=str(e))
 
-    return OutboundMessage(text=reply_text, audio_url=audio_url)
+    return OutboundMessage(
+        text=reply_text,
+        audio_url=audio_url,
+        pending_handoffs=tuple(pending_handoffs),
+    )
 
 
 # ─── Helpers ────────────────────────────────────────────────────────────
@@ -362,7 +445,7 @@ async def _resolve_entities(
     # Prevents stale context from bleeding across demo sessions.
     if business.is_demo and conversation:
         last_active = conversation.last_message_at or conversation.created_at
-        if last_active and (datetime.now(tz=timezone.utc) - last_active) >= DEMO_IDLE_RESET:
+        if last_active and (datetime.now(tz=UTC) - last_active) >= DEMO_IDLE_RESET:
             conversation.status = ConversationStatus.closed
             await session.flush()
             conversation = None
@@ -457,25 +540,39 @@ async def _persist_ai_run(
     await session.flush()
 
 
-async def _open_handoff(
+async def _persist_handoff(
     session: AsyncSession,
     business: Business,
     conversation: Conversation,
     customer: Customer,
     inbound: InboundMessage,
-    classification: ClassifierOutput,
-) -> None:
+    classification: ClassifierOutput | None = None,
+    *,
+    reason: str | None = None,
+    summary: str | None = None,
+    priority: int | None = None,
+) -> HandoffTask:
     safe_text = pii.redact(inbound.text or "")
-    summary = (
-        f"Customer ({customer.name or customer.external_user_id}) — "
-        f"intent={classification.intent}, urgency={classification.urgency}\n"
-        f"Last message: {safe_text[:300]}"
-    )
+    if classification is not None:
+        summary = summary or (
+            f"Customer ({customer.name or customer.external_user_id}) — "
+            f"intent={classification.intent}, urgency={classification.urgency}\n"
+            f"Last message: {safe_text[:300]}"
+        )
+        reason = reason or f"classifier:{classification.intent or 'unknown'}"
+        priority = priority or (1 if classification.urgency == "high" else 2)
+    else:
+        reason = reason or "unknown"
+        summary = summary or (
+            f"Customer ({customer.name or customer.external_user_id})\n"
+            f"Last message: {safe_text[:300]}"
+        )
+        priority = priority or 1
     task = HandoffTask(
         business_id=business.id,
         conversation_id=conversation.id,
-        reason=f"classifier:{classification.intent or 'unknown'}",
-        priority=1 if classification.urgency == "high" else 2,
+        reason=reason,
+        priority=priority,
         status=HandoffStatus.open,
         summary=summary,
     )
@@ -486,13 +583,57 @@ async def _open_handoff(
     if not business.is_demo:
         conversation.status = ConversationStatus.human_needed
     await session.flush()
+    return task
 
-    await dispatch_handoff(
-        task,
+
+async def _open_handoff(
+    session: AsyncSession,
+    business: Business,
+    conversation: Conversation,
+    customer: Customer,
+    inbound: InboundMessage,
+    classification: ClassifierOutput | None = None,
+    *,
+    reason: str | None = None,
+    summary: str | None = None,
+    priority: int | None = None,
+) -> PendingHandoffNotification:
+    task = await _persist_handoff(
+        session,
+        business,
+        conversation,
+        customer,
+        inbound,
+        classification,
+        reason=reason,
+        summary=summary,
+        priority=priority,
+    )
+    return PendingHandoffNotification(
+        task=task,
         business_id=business.id,
         conversation_id=conversation.id,
         is_demo=business.is_demo,
     )
+
+
+async def dispatch_pending_handoffs(
+    pending_handoffs: tuple[PendingHandoffNotification, ...],
+    *,
+    error_event: str,
+    **log_context: Any,
+) -> None:
+    """Best-effort publication for handoffs whose transaction has committed."""
+    for pending in pending_handoffs:
+        try:
+            await dispatch_handoff(
+                pending.task,
+                business_id=pending.business_id,
+                conversation_id=pending.conversation_id,
+                is_demo=pending.is_demo,
+            )
+        except Exception:
+            log.exception(error_event, **log_context)
 
 
 async def _execute_tools(
@@ -501,9 +642,10 @@ async def _execute_tools(
     customer: Customer,
     conversation: Conversation,
     inbound: InboundMessage,
-    tool_calls: list[dict],
-) -> list[dict]:
-    results: list[dict] = []
+    tool_calls: list[dict[str, Any]],
+    pending_handoffs: list[PendingHandoffNotification],
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
     for call in tool_calls:
         name = call.get("name", "")
         try:
@@ -516,6 +658,7 @@ async def _execute_tools(
                 is_demo=business.is_demo,
                 session=session,
                 idempotency_key=f"{inbound.channel}:{inbound.external_message_id}:{call.get('id')}",
+                pending_handoffs=pending_handoffs,
             )
             output = await tool.run(ctx, payload)
             results.append(
@@ -548,6 +691,14 @@ async def _persist_ai_reply(
     )
     session.add(msg)
     await session.flush()
+
+
+async def _persist_fallback_reply(
+    session: AsyncSession,
+    conversation: Conversation,
+) -> None:
+    await _persist_ai_reply(session, conversation, FALLBACK_REPLY)
+    conversation.last_message_at = datetime.now(tz=UTC)
 
 
 async def _load_knowledge(
