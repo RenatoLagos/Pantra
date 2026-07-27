@@ -1,1 +1,1 @@
-"""Conversation memory: sliding window + rolling summary + customer notes."""
+"""Conversation context: a bounded sliding window of recent messages."""

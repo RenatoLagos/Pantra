@@ -100,16 +100,17 @@ Implementation:
 
 ## 6. Conversation memory
 
-Three layers, each with a different lifetime:
+The runtime uses two context layers:
 
 | Layer | Lifetime | Storage | Used for |
 |-------|----------|---------|----------|
 | Sliding window | last N messages | DB query at request time | exact recent context |
-| Rolling summary | full conversation | `conversations.summary` (text) | long-term thread coherence |
-| Structured customer memory | across conversations | `customers.notes` JSONB | preferences, prior bookings, language, dietary, etc. |
+| Structured customer memory | across conversations | `customers.notes` JSONB | persistent facts injected into the system prompt |
 
-When the message count crosses a threshold (`MEMORY_SUMMARIZE_AFTER`), a
-worker job re-summarises the older half and trims the window.
+`MEMORY_WINDOW_MESSAGES` controls the window size. Older messages remain in
+the customer-facing transcript but are not injected into the LLM context after
+they leave the window. Rolling conversation summaries are not generated or
+injected.
 
 ## 7. Privacy & logging
 

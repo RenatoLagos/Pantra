@@ -82,7 +82,6 @@ class Settings(BaseSettings):
 
     # ─── Memory ──
     memory_window_messages: int = 20
-    memory_summarize_after: int = 40
 
     # ─── Handoff ──
     # Telegram bot for the business owner. MVP keeps a single bot + chat_id

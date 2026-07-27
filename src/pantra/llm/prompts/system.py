@@ -68,9 +68,6 @@ SYSTEM_TEMPLATE = dedent(
     - Name: "{customer_name}"
     - Notes: {customer_notes}
 
-    CONVERSATION SUMMARY (older history, if any):
-    {summary}
-
     HANDOFF TRIGGERS — call handoff_to_human when:
     - Customer is angry or complaining.
     - Discount or commercial negotiation.
@@ -130,5 +127,4 @@ def build_system_prompt(
         # learned one) > the business default. This way, a Spanish customer
         # in a German-default business gets Spanish replies.
         customer_language=conversation.language or customer.preferred_language or business.default_language,
-        summary=conversation.summary or "(no prior summary)",
     )

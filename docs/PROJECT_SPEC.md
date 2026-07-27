@@ -74,7 +74,7 @@ hosted in Frankfurt.
 | 4 | LLM stack: **1 classifier + 1 main** | Haiku 4.5 / Gemini Flash for classifier; Sonnet 4.6 for main. 4-tier router is premature optimization. |
 | 5 | Booking concurrency: **idempotency keys + `SELECT FOR UPDATE` + verify-then-commit** | Two customers can hit the same slot at the same time. |
 | 6 | WhatsApp 24h window: **parametrized template system + window detector + send-template fallback** | Outside the 24h window only approved templates can be sent. |
-| 7 | Conversation memory: **sliding window of last N messages + rolling summary + structured customer memory** (separate from transcript) | LLM context is finite; long conversations need bounded prompts. |
+| 7 | Conversation memory: **sliding window of last N messages + persistent structured `Customer.notes` injected into prompts** (separate from transcript) | LLM context is finite; recent context must stay bounded while durable customer facts survive across conversations. Rolling conversation summaries are not used. |
 | 8 | Eval pipeline: **case-based runner** (Promptfoo-compatible cases) on every prompt change | Manual test cases ≠ regression safety. |
 | 9 | Privacy: **PII redaction in logs + 7-day retention for prompt logs + customer opt-out** | GDPR compliance + DE market. |
 | 10 | No-show reduction: **T-24h + T-2h reminder + explicit confirm + auto re-booking on cancel** | This is a sellable clinic feature. |

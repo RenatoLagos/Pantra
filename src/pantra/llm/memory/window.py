@@ -30,11 +30,7 @@ async def load_window(
     conversation_id: uuid.UUID,
     limit: int | None = None,
 ) -> list[WindowMessage]:
-    """Last N messages, oldest first, mapped to OpenAI/Anthropic chat shape.
-
-    The rolling summary is injected separately (see prompts/system.py) so
-    older messages aren't duplicated.
-    """
+    """Last N messages, oldest first, mapped to OpenAI/Anthropic chat shape."""
     n = limit or settings.memory_window_messages
     stmt = (
         select(Message)

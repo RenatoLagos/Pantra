@@ -1,7 +1,15 @@
 # ADR 0001 — MVP scope and stack
 
 - Date: 2026-04-27
-- Status: Accepted
+- Status: Accepted — Decision 7 amended 2026-07-27
+
+## Amendment — 2026-07-27
+
+Decision 7 is superseded only where it mandates rolling conversation
+summaries. The active memory model is a bounded recent-message sliding window
+plus persistent structured `customers.notes` injected into prompts. The
+rolling-summary path was removed because it had no active invocation or write
+path. The original decision text remains below as historical context.
 
 ## Context
 

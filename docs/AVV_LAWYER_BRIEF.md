@@ -160,7 +160,9 @@ implementa, ordenadas por categoría DSGVO Art. 32:
 
 - **Solo se almacena** lo que es necesario para el servicio
 - **PII redaction** en logs antes de persistir
-- **Sliding window** de mensajes en memoria (last 20) + summary, no historial completo en context LLM
+- **Contexto LLM minimizado**: ventana acotada de mensajes recientes
+  (`MEMORY_WINDOW_MESSAGES`, default 20) + datos estructurados persistentes de
+  `Customer.notes` cuando correspondan; no se envía el historial completo
 - **Right to erasure**: endpoint admin (TODO) que borra customer + cascada por foreign keys
 
 ### 4.6 Pseudonymisierung

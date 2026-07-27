@@ -51,7 +51,7 @@ class Conversation(UUIDPK, TimestampMixin, Base):
     last_inbound_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    # Rolling summary, refreshed by the memory summarizer worker.
+    # Legacy unused column retained for schema compatibility.
     summary: Mapped[str | None] = mapped_column(Text)
 
     is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)

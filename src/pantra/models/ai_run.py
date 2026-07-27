@@ -18,7 +18,7 @@ class AIRun(UUIDPK, TimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    role: Mapped[str] = mapped_column(String(32), nullable=False)  # 'classifier' | 'main' | 'summarizer' | 'fast_reply'
+    role: Mapped[str] = mapped_column(String(32), nullable=False)  # 'classifier' | 'main' | 'fast_reply'
     provider: Mapped[str] = mapped_column(String(32), nullable=False)
     model: Mapped[str] = mapped_column(String(64), nullable=False)
 
