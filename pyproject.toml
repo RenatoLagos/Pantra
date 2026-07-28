@@ -56,11 +56,17 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
-ignore = ["E501"]
+# E501: line length handled by the formatter. UP042: `str, Enum` is intentional
+# (JSON-serializable enums). UP017: the codebase uses `timezone.utc` as house
+# style rather than the `datetime.UTC` alias.
+ignore = ["E501", "UP042", "UP017"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI dependency-injection callables are safe as argument defaults.
-extend-immutable-calls = ["fastapi.Depends"]
+extend-immutable-calls = [
+    "fastapi.Depends", "fastapi.Query", "fastapi.Header",
+    "fastapi.Cookie", "fastapi.File", "fastapi.Form",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

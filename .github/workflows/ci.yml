@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pantra
+          POSTGRES_PASSWORD: pantra
+          POSTGRES_DB: pantra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pantra -d pantra_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://pantra:pantra@localhost:5432/pantra_test
+      DATABASE_URL_SYNC: postgresql+psycopg2://pantra:pantra@localhost:5432/pantra_test
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      ANTHROPIC_API_KEY: test
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e '.[dev]'
+
+      # ruff + mypy are non-blocking for now: the codebase carries pre-existing
+      # lint/type debt. They run so regressions are visible; flip
+      # continue-on-error to false once a one-time baseline cleanup lands.
+      - name: Lint (ruff)
+        continue-on-error: true
+        run: ruff check src tests
+
+      - name: Type check (mypy)
+        continue-on-error: true
+        run: mypy src
+
+      # Hard gates below.
+      - name: Migrations apply cleanly
+        run: alembic upgrade head
+
+      - name: Tests
+        run: pytest -q --cov=pantra --cov-report=term-missing
